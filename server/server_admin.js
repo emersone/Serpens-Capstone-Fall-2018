@@ -2,6 +2,7 @@
 
 //Server set-up
 const path = require(`path`);
+const http = require(`http`);
 const mysql = require('./dbcon.js');
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -11,11 +12,24 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
 
+/* ------------- Start Server ------------- */
+const server = app.listen(process.env.PORT || 8080, () => {
+	const port = server.address().port;
+	console.log(`App listening on port ${port}`);
+});
+
+
+app.get('/', function (req, res) {
+	res.send('Homepage');
+});
+
 /* ******************* Administrator Control Functions ******************* */
 
 /*------------- Create an admin -------------*/
 app.post('/admins', (req, res) => {
 	var context = {};
+	console.log("here");
+	console.log(req);
 
 	//Check that email field exists in request
   if(req.body.email === null ||
@@ -75,8 +89,8 @@ app.get('/admins', (req, res) => {
 		}
 
 		context.results = JSON.stringify(rows);
-		console.log(context);
- 		res.status(200).send(context);
+		res.header('Access-Control-Allow-Origin', '*');
+ 		res.status(200).send(rows);
 	});
 });
 
@@ -311,6 +325,7 @@ app.delete('/users/:user_id', (req, res) => {
 
 //Error handling: 404
 app.use(function(req, res) {
+	console.log("Wrong place")
 	res.status(404);
 	res.header('Access-Control-Allow-Origin', '*');
 	res.send('404');
@@ -325,14 +340,3 @@ app.use(function(req, res) {
 	res.header('Access-Control-Allow-Origin', '*');
 	res.send('500');
 });
-
-
-/* ------------- Start Server ------------- */
-if (module === require.main) {
-  const server = app.listen(process.env.PORT || 8080, () => {
-    const port = server.address().port;
-    console.log(`App listening on port ${port}`);
-  });
-}
-
-module.exports = app;
