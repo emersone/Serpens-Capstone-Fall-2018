@@ -1,0 +1,58 @@
+/*http://htmlcolorcodes.com/color-chart/*/
+head {
+  text-align: center;
+  align-content: center;
+}
+
+body {
+  text-align: center;
+  align-content: center;
+  width: 100%
+}
+
+ul, #loginInfo {
+  text-align: left;
+  margin-left: 35%;
+}
+
+td {
+  width: 200px;
+}
+
+table {
+  border-collapse: collapse;
+  margin: auto;
+}
+
+tr:nth-of-type(even){
+  background-color: #AED6F1;
+}
+
+th {
+  font-weight: bold;
+  background-color: #85C1E9;
+}
+
+thead {
+  font-weight: bold;
+  background-color: #85C1E9;
+}
+
+table, th, td {
+    border: 1px solid black;
+    align-content: center;
+}
+
+textarea {
+  width: 100%;
+  height: 150px;
+  overflow: scroll;
+}
+
+.carousel-item {
+  background-color: #AED6F1;
+}
+
+#randomNo, #quoteNo {
+  border: none;
+}

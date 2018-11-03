@@ -11,6 +11,7 @@ const _ = require("lodash");
 const session = require("express-session"); //for session tracking
 const handlebars = require('express-handlebars').create({defaultLayout:'main'});
 
+app.use('/static', express.static('public'));
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
 app.set('mysql', mysql);
@@ -23,6 +24,26 @@ app.use(session({
   saveUninitialized: false
           }));
 session.loggedIn = 0;
+
+/* ******************* Test Page Admin******************* */
+/*
+ *       <tr v-for="admin in admins">
+        <td>{{ admin.admin_id }}</td>
+        <td>{{ admin.email }}</td>
+        <td>{{ admin.password }}</td>
+		<td>{{ admin.creation_date }}</td>
+ */
+app.get('/pageAdmin', (req, res) => {
+    console.log("Testing pageAdmin handlebars");
+    var context = {admins: [
+    	{admin_id: 1, email: "test@gmail.com", password: "test", creation_date: '11/2/2018'},
+    	{admin_id: 2, email: "test@gmail.com", password: "test", creation_date: '11/2/2018'},
+    	{admin_id: 3, email: "test@gmail.com", password: "test", creation_date: '11/2/2018'},
+    	{admin_id: 4, email: "test@gmail.com", password: "test", creation_date: '11/2/2018'}
+    ]};
+    res.render('pageAdmin', context);
+});
+
 
 /* ******************* Login Functions ******************* */
 
@@ -40,55 +61,57 @@ app.get("/logOut", function(req, res){
   res.redirect("/");
 });
 
+const checkUserLogin = (email, password) => {
+	var SQL = "SELECT user_id, fname FROM users WHERE email = ? AND password = ?";
+	var inserts = [email, password];
+	return new Promise((resolve, reject) => {
+		mysql.pool.query(SQL, inserts, (error, results) => {
+	      if (!_.isEmpty(results)) {
+	      	resolve({id: results[0].user_id, name: results[0].fname});
+	      }
+	      reject(error);
+    	});
+	})
+	.catch(() => null);
+};
+
+const checkAdminLogin = (email, password) => {
+	var SQL = "SELECT admin_id FROM administrators WHERE email = ? AND password = ?";
+	var inserts = [email, password];
+	return new Promise((resolve, reject) => {
+		mysql.pool.query(SQL, inserts, (error, results) => {
+	      if (!_.isEmpty(results)) {
+	      	resolve({id: results[0].admin_id, name: email});
+	      }
+	      reject(error);
+    	});
+	})
+	.catch(() => null);
+};
+
+
 app.post('/', (req, res) => {
-	const context = {};
-	const results = checkLogin(res, req.body.email, req.body.password, context);
-	if (!_.isEmpty(results)) {
-		session.loggedIn = results.user_id || results.admin_id;
-	}
-	console.log("Results");
-	console.log(results);
-	console.log("Context");
-	console.log(context);
-	res.render('adminLanding', results);
-	
-	
+	Promise.all([checkUserLogin(req.body.email, req.body.password), checkAdminLogin(req.body.email, req.body.password)])
+		.then((results) => {
+			if (results[0] !== null) {
+				session.loggedIn = results[0].id;
+				res.render('userLanding', results[0]);
+			}
+			else if (results[1] !== null) {
+				session.loggedIn = results[1].id;
+				res.render('adminLanding', results[1]);
+			}
+			else {
+				res.render('loginError', {});
+			}
+		})
+		.catch((err) => {
+			console.log("Error in login attempt");
+			console.log(err);
+			res.render('loginError', {});
+		});
 });
 
-function checkLogin (res, email, password, context) {
-  var userQL = "SELECT user_id, password, email, fname FROM users WHERE email = ? AND password = ?";
-  var adminSQL = "SELECT admin_id, password, email FROM administrators WHERE email = ? AND password = ?";
-  var inserts = [email, password];
-  
-  mysql.pool.query(userQL, inserts, (error, userResults, fields) => {
-//  	console.log(userResults);
-      if (error) {
-          res.write(JSON.stringify(error));
-          res.status(400);
-          res.render('loginError', context);
-      }
-      if (!_.isEmpty(userResults)) {
-      	context = {id: userResults[0].user_id, name: userResults[0].fname};
-//      	return context;
-//      	return [userResults[0].user_id, userResults[0].fname];
-      }
-      mysql.pool.query(adminSQL, inserts, (error, adminResults, fields) => {
-//      	console.log(adminResults);
-        if (error) {
-            res.write(JSON.stringify(error));
-            res.status(400);
-            res.render('loginError', context);
-        }
-        if (_.isEmpty(adminResults)) {
-          return {};
-        }
-        context = {id: adminResults[0].admin_id, email: adminResults[0].email};
-//        return context;
-//        return {adminResults[0].admin_id, adminResults[0].email];
-    });         
-  });
-  return context;
-}
 app.post('/admins', (req, res) => {
 	var context = {};
 
@@ -204,7 +227,7 @@ app.put('/admins/:admin_id', (req, res) => {
 
 /*------------- Delete an admin -------------*/
 app.delete('/admins/:admin_id', (req, res) => {
-	var context = {};y6,l
+	var context = {};y6,l;
 	var sql = 'DELETE FROM administrators WHERE admin_id = ?';
 
 	mysql.pool.query (sql, req.params.admin_id, function(err, rows, fields){
@@ -411,3 +434,5 @@ if (module === require.main) {
 }
 
 module.exports = app;
+
+
