@@ -1,6 +1,6 @@
 //Server-side code for the admins website
 
-//Server set-up
+//Set-up
 const path = require(`path`);
 const http = require(`http`);
 const mysql = require('./dbcon.js');
@@ -8,11 +8,26 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 
+const _ = require("lodash");
+const session = require("express-session");
+const handlebars = require('express-handlebars').create({defaultLayout:'main'});
+
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
 
+/* ******************* Frontend Pages ******************* */
 
-/* ------------- Start Server ------------- */
+app.use('/admins', express.static(path.join(__dirname, '/admins')));
+// app.use('/login/admins', express.static(path.join(__dirname, '/login/admins')));
+// app.use('/users', express.static(path.join(__dirname, 'users')));
+// app.use('/login/users', express.static(path.join(__dirname, '/login/users')));
+
+app.engine('handlebars', handlebars.engine);
+app.set('view engine', 'handlebars');
+app.set('mysql', mysql);
+
+
+/* ******************* Start Server ******************* */
 const server = app.listen(process.env.PORT || 8080, () => {
 	const port = server.address().port;
 	console.log(`App listening on port ${port}`);
@@ -23,10 +38,11 @@ app.get('/', function (req, res) {
 	res.send('Homepage');
 });
 
-/* ******************* Administrator Control Functions ******************* */
+
+/* ******************* Backend Functions ******************* */
 
 /*------------- Create an admin -------------*/
-app.post('/admins', (req, res) => {
+app.post('/API/admins', (req, res) => {
 	var context = {};
 	console.log("here");
 	console.log(req);
@@ -76,7 +92,7 @@ app.post('/admins', (req, res) => {
 
 
 /*------------- Get all admins -------------*/
-app.get('/admins', (req, res) => {
+app.get('/API/admins', (req, res) => {
 	var context = {};
 	var sql = 'SELECT * FROM administrators';
 
@@ -96,7 +112,7 @@ app.get('/admins', (req, res) => {
 
 
 /*------------- Get a specific admin -------------*/
-app.get('/admins/:admin_id', (req, res) => {
+app.get('/API/admins/:admin_id', (req, res) => {
 	var context = {};
 	var sql = 'SELECT * FROM administrators WHERE admin_id = ?';
 
@@ -116,7 +132,7 @@ app.get('/admins/:admin_id', (req, res) => {
 
 
 /*------------- Edit an admin -------------*/
-app.put('/admins/:admin_id', (req, res) => {
+app.put('/API/admins/:admin_id', (req, res) => {
 	var context = {};
 
 	//Create variables to insert edited data into table
@@ -142,8 +158,8 @@ app.put('/admins/:admin_id', (req, res) => {
 
 
 /*------------- Delete an admin -------------*/
-app.delete('/admins/:admin_id', (req, res) => {
-	var context = {};y6,l
+app.delete('/API/admins/:admin_id', (req, res) => {
+	var context = {};
 	var sql = 'DELETE FROM administrators WHERE admin_id = ?';
 
 	mysql.pool.query (sql, req.params.admin_id, function(err, rows, fields){
@@ -161,10 +177,8 @@ app.delete('/admins/:admin_id', (req, res) => {
 });
 
 
-/* ******************* User Control Functions ******************* */
-
 /*------------- Create a user -------------*/
-app.post('/users', (req, res) => {
+app.post('/API/users', (req, res) => {
 	var context = {};
 
 	//Check that email field exists in request
@@ -234,7 +248,7 @@ app.post('/users', (req, res) => {
 
 
 /*------------- Get all users -------------*/
-app.get('/users', (req, res) => {
+app.get('/API/users', (req, res) => {
 	var context = {};
 	var sql = 'SELECT * FROM users';
 
@@ -254,7 +268,7 @@ app.get('/users', (req, res) => {
 
 
 /*------------- Get a specific user -------------*/
-app.get('/users/:user_id', (req, res) => {
+app.get('/API/users/:user_id', (req, res) => {
 	var context = {};
 	var sql = 'SELECT * FROM users WHERE user_id = ?';
 
@@ -274,7 +288,7 @@ app.get('/users/:user_id', (req, res) => {
 
 
 /*------------- Edit a user -------------*/
-app.put('/users/:user_id', (req, res) => {
+app.put('/API/users/:user_id', (req, res) => {
 	var context = {};
 
 	//Create variables to insert edited data into table
@@ -302,7 +316,7 @@ app.put('/users/:user_id', (req, res) => {
 
 
 /*------------- Delete a user -------------*/
-app.delete('/users/:user_id', (req, res) => {
+app.delete('/API/users/:user_id', (req, res) => {
 	var context = {};
 	var sql = 'DELETE FROM users WHERE user_id = ?';
 
@@ -325,7 +339,6 @@ app.delete('/users/:user_id', (req, res) => {
 
 //Error handling: 404
 app.use(function(req, res) {
-	console.log("Wrong place")
 	res.status(404);
 	res.header('Access-Control-Allow-Origin', '*');
 	res.send('404');

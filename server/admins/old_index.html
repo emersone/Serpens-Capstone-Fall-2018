@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<!-- Source of modal code: https://vuejs.org/v2/examples/modal.html -->
+
+<html>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="modal.css">
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+  </head>
+
+<body>
+
+<!-- Displays Administrators table -->
+<h2>Administrators</h2>
+<div id="app">
+  <modal v-if="showModal" @close="showModal = false">
+    <!--
+      you can use custom content here to overwrite
+      default content
+    -->
+    <h3 slot="header">Edit Administrator</h3>
+  </modal>
+
+  <table>
+      <tr>
+		<th>Admin Id</th>
+        <th>Email</th>
+        <th>Password</th>
+        <th>Creation Date</th>
+        <th>Edit</th>
+        <th>Delete</th>
+      </tr>
+      <tr v-for="admin in admins">
+        <td>{{ admin.admin_id }}</td>
+        <td>{{ admin.email }}</td>
+        <td>{{ admin.password }}</td>
+        <td>{{ admin.creation_date }}</td>
+        <td><button v-on:click="openAdminModal">Edit</button></td>
+        <td><button v-on:click="deleteAdmin">Delete</button></td>
+      </tr>
+  </table>
+
+
+<!-- Handles adding a new administator -->
+  <br></br>
+  <input placeholder="email" v-bind:id="'email'" type = "text" value = ""></input>
+  <input placeholder="password" v-bind:id="'password'" type = "text" value = ""></input>
+  <input placeholder="creation_date" v-bind:id="'creation_date'" type = "text" value = ""></input>
+  <button v-on:click="addAdmin">Add Administrator</button>
+
+</div>
+</body>
+<script src="test_site.js"></script>
+
+
+
+<!-- template for the modal component -->
+<script type="text/x-template" id="modal-template">
+  <transition name="modal">
+    <div class="modal-mask">
+      <div class="modal-wrapper">
+        <div class="modal-container">
+
+          <div class="modal-header">
+            <slot name="header">
+              default header
+            </slot>
+          </div>
+
+          <div class="modal-body">
+            <slot name="body">
+              <input placeholder="email" v-bind:id="'email'" type = "text" value = ""></input>
+              <input placeholder="password" v-bind:id="'password'" type = "text" value = ""></input>
+              <input placeholder="creation_date" v-bind:id="'creation_date'" type = "text" value = ""></input>
+            </slot>
+          </div>
+
+          <div class="modal-footer">
+            <slot name="footer">
+              <!-- <button class="modal-default-button" @click="$emit('close')">OK</button> -->
+              <button class="modal-default-button" @click="$emit('close')">OK</button>
+            </slot>
+          </div>
+        </div>
+      </div>
+    </div>
+  </transition>
+</script>
+
+
+
+</html>

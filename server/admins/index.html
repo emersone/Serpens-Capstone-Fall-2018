@@ -1,61 +1,50 @@
 <!DOCTYPE html>
+<!-- Source of modal code: https://vuejs.org/v2/examples/modal.html -->
+
 <html>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<link rel="stylesheet" type="text/css" href="modal.css">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
-
-
-
-
-    <style>
-      <table> {
-        font-family: arial, sans-serif;
-        border-collapse: collapse;
-        width: 100%;
-      }
-
-      td, th {
-        border: 1px solid #dddddd;
-        text-align: left;
-        padding: 8px;
-      }
-
-      tr:nth-child(even) {
-        background-color: #dddddd;
-      }
-    </style>
   </head>
 
 <body>
 
-
-
+<!-- Displays Administrators table -->
 <h2>Administrators</h2>
 <div id="app">
+
   <table>
       <tr>
 		<th>Admin Id</th>
         <th>Email</th>
         <th>Password</th>
         <th>Creation Date</th>
+        <th>Edit</th>
+        <th>Delete</th>
       </tr>
       <tr v-for="admin in admins">
         <td>{{ admin.admin_id }}</td>
-        <td>{{ admin.email }}</td>
-        <td>{{ admin.password }}</td>
-		<td>{{ admin.creation_date }}</td>
+        <td v-html=admin.email></td>
+        <td v-html=admin.password></td>
+        <td v-html=admin.creation_date></td>
+        <td><button v-on:click="editAdmin">Edit</button></td>
+        <td><button v-on:click="deleteAdmin">Delete</button></td>
       </tr>
   </table>
+
+
+<!-- Handles adding a new administator -->
   <br></br>
   <input placeholder="email" v-bind:id="'email'" type = "text" value = ""></input>
   <input placeholder="password" v-bind:id="'password'" type = "text" value = ""></input>
   <input placeholder="creation_date" v-bind:id="'creation_date'" type = "text" value = ""></input>
   <button v-on:click="addAdmin">Add Administrator</button>
- </div>
 
-
+</div>
 </body>
 <script src="test_site.js"></script>
+
 </html>
