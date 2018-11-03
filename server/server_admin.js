@@ -45,7 +45,7 @@ app.get('/', function (req, res) {
 app.post('/API/admins', (req, res) => {
 	var context = {};
 	console.log("here");
-	console.log(req);
+	console.log(req.body);
 
 	//Check that email field exists in request
   if(req.body.email === null ||
@@ -83,7 +83,6 @@ app.post('/API/admins', (req, res) => {
 				res.status(400).send(err);
 				return;
 			}
-
 			//TODO return id?
 			res.status(200).end();
 			return;
@@ -94,7 +93,7 @@ app.post('/API/admins', (req, res) => {
 /*------------- Get all admins -------------*/
 app.get('/API/admins', (req, res) => {
 	var context = {};
-	var sql = 'SELECT * FROM administrators';
+	var sql = 'SELECT admin_id, email, creation_date FROM administrators';
 
 	mysql.pool.query (sql, function(err, rows, fields){
 		if(err){
@@ -114,7 +113,7 @@ app.get('/API/admins', (req, res) => {
 /*------------- Get a specific admin -------------*/
 app.get('/API/admins/:admin_id', (req, res) => {
 	var context = {};
-	var sql = 'SELECT * FROM administrators WHERE admin_id = ?';
+	var sql = 'SELECT admin_id, email, creation_date FROM administrators WHERE admin_id = ?';
 
 	mysql.pool.query (sql, req.params.admin_id, function(err, rows, fields){
 		if(err){
@@ -134,13 +133,25 @@ app.get('/API/admins/:admin_id', (req, res) => {
 /*------------- Edit an admin -------------*/
 app.put('/API/admins/:admin_id', (req, res) => {
 	var context = {};
+	var sql = "";
+	var record = [];
+	console.log("here");
+	console.log(req.body);
+	console.log(req.body.password);
 
-	//Create variables to insert edited data into table
-	var sql = 'UPDATE administrators SET email = ?, password = ?, creation_date = ? WHERE admin_id = ?';
-	var record = [req.body.email,
-							  req.body.password,
-								req.body.creation_date,
-							  req.params.admin_id];
+	//Update with or without password
+	if(req.body.password === null || req.body.password === undefined || req.body.password === "") {
+		sql = 'UPDATE administrators SET email = ?, creation_date = ? WHERE admin_id = ?';
+		record = [req.body.email, req.body.creation_date, req.params.admin_id];
+	} else {
+			sql = 'UPDATE administrators SET email = ?, password = ?, creation_date = ? WHERE admin_id = ?';
+			record = [req.body.email,
+									req.body.password,
+									req.body.creation_date,
+									req.params.admin_id];
+	}
+	console.log(sql);
+	console.log(record);
 
 	mysql.pool.query (sql, record, function(err, rows, fields){
 		if(err){
@@ -250,7 +261,7 @@ app.post('/API/users', (req, res) => {
 /*------------- Get all users -------------*/
 app.get('/API/users', (req, res) => {
 	var context = {};
-	var sql = 'SELECT * FROM users';
+	var sql = 'SELECT admin_id, email, creation_date, fname, lname FROM users';
 
 	mysql.pool.query (sql, function(err, rows, fields){
 		if(err){
@@ -270,7 +281,7 @@ app.get('/API/users', (req, res) => {
 /*------------- Get a specific user -------------*/
 app.get('/API/users/:user_id', (req, res) => {
 	var context = {};
-	var sql = 'SELECT * FROM users WHERE user_id = ?';
+	var sql = 'SELECT admin_id, email, creation_date, fname, lname FROM users WHERE user_id = ?';
 
 	mysql.pool.query (sql, req.params.user_id, function(err, rows, fields){
 		if(err){
@@ -290,15 +301,22 @@ app.get('/API/users/:user_id', (req, res) => {
 /*------------- Edit a user -------------*/
 app.put('/API/users/:user_id', (req, res) => {
 	var context = {};
+	var sql = "";
+	var record = [];
 
-	//Create variables to insert edited data into table
-	var sql = 'UPDATE users SET email = ?, password = ?, creation_date = ?, fname = ?, lname = ? WHERE user_id = ?';
-	var record = [req.body.email,
-							  req.body.password,
-								req.body.creation_date,
-								req.body.fname,
-								req.body.lname,
-							  req.params.user_id];
+	//Update with or without password
+	if(req.body.password != null || req.body.password != undefined || req.body.password != "") {
+		sql = 'UPDATE administrators SET email = ?, creation_date = ?, fname = ?, lname = ? WHERE admin_id = ?';
+		record = [req.body.email, req.body.creation_date, req.body.fname, req.body.lname, req.params.admin_id];
+	} else {
+			sql = 'UPDATE administrators SET email = ?, password = ?, creation_date = ?, fname = ?, lname = ? WHERE admin_id = ?';
+			record = [req.body.email,
+									req.body.password,
+									req.body.creation_date,
+									req.body.fname,
+									req.body.lname,
+									req.params.admin_id];
+	}
 
 	mysql.pool.query (sql, record, function(err, rows, fields){
 		if(err){

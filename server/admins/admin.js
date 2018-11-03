@@ -8,7 +8,7 @@ var app = new Vue({
   },
   created() {
 	  var vm = this;
-      fetch("http://localhost:8080/API/admins")
+      fetch("https://serpens-cs467.appspot.com/API/admins")
       .then(function(response) {
   			return response.json();
   		})
@@ -20,22 +20,26 @@ var app = new Vue({
 
   methods: {
     clearAdmins: function() {
-      for (i in this.admins) {
+      var length = this.admins.length;
+      for (var i = 0; i < length; i++) {
         this.admins.pop();
       }
     },
     refreshAdmins: function() {
       var vm = this;
-      vm.clearAdmins();
-      fetch("http://localhost:8080/API/admins")
+      fetch("https://serpens-cs467.appspot.com/API/admins")
   		.then(function(response) {
   			return response.json();
   		})
   		.then(function(json) {
+        vm.clearAdmins();
         for(i in json) {
           vm.admins.push(json[i]);
         }
-  		});
+  		})
+      .catch(function(err){
+        console.log(err);
+      })
     },
     addAdmin: function(event) {
       var vm = this;
@@ -49,64 +53,42 @@ var app = new Vue({
         "creation_date": creation_date
       }
 
-      $.post("http://localhost:8080/API/admins", obj, function(res) {
-        vm.refreshAdmins()
-      });
+      fetch("https://serpens-cs467.appspot.com/API/admins", {
+        method: 'POST', // or 'PUT'
+        body: JSON.stringify(obj), // data can be `string` or {object}!
+        headers:{
+          'Content-Type': 'application/json'
+        }
+      }).then(res => vm.refreshAdmins())
+      .catch(error => console.error('Error:', error));
+
+      // $.post("http://localhost:8080/API/admins", obj, function(res) {
+      //   vm.refreshAdmins()
+      // });
   },
     deleteAdmin: function(event) {
       var vm = this;
       var adminId = event.toElement.parentNode.parentNode.firstChild.innerHTML
-      fetch("http://localhost:8080/API/admins/" + adminId, {
+      fetch("https://serpens-cs467.appspot.com/API/admins" + adminId, {
         method: 'DELETE',    })
         .then(response => vm.refreshAdmins())
         .catch(error => console.error('Error:', error));
     },
-
-    // openAdminModal: function(event) {
-    //   this.showModal = true;
-    //   var vm = this;
-    //   var adminId = event.toElement.parentNode.parentNode.firstChild.innerHTML
-    //   var email = event.toElement.parentNode.parentNode.childNodes[2].innerHTML
-    //   var password = event.toElement.parentNode.parentNode.childNodes[4].innerHTML
-    //   var creation_date = event.toElement.parentNode.parentNode.childNodes[6].innerHTML
-    //
-    //   console.log(email);
-    //   console.log(password);
-    //   console.log(creation_date);
-    //
-    //   obj = {
-    //     "email": email,
-    //     "password": password,
-    //     "creation_date": creation_date
-    //   }
-    //
-    //   fetch("http://localhost:8080/API/admins/" + adminId, {
-    //     method: 'PUT',    })
-    //     .then(response => vm.refreshAdmins())
-    //     .catch(error => console.error('Error:', error));
-    // },
-
-
-    listenEdit: function() {
-      
-
-    }
     editAdmin: function(event) {
       var vm = this;
+
       var adminId = event.toElement.parentNode.parentNode.firstChild.innerHTML
       var email = event.toElement.parentNode.parentNode.childNodes[2].innerHTML
       var password = event.toElement.parentNode.parentNode.childNodes[4].innerHTML
       var creation_date = event.toElement.parentNode.parentNode.childNodes[6].innerHTML
       var rowIndex = event.toElement.parentNode.parentNode.rowIndex
 
-      obj = {
-        "admin_id": adminId,
-        "email": '<input placeholder=' + email + ' type="text" name="email" value="">',
-        "password":  '<input placeholder=' + password + ' type="text" name="password" value="">',
-        "creation_date": '<input placeholder=' + creation_date + ' type="text" name="creation_date" value="">'
-      }
+        window.location.href = "edit.html?admin_id=" + adminId +
+                               "&email=" + email + "&password=" + password +
+                               "&creation_date=" + creation_date;
 
-      Vue.set(this.admins, rowIndex-1, obj);
+
+      //Vue.set(this.admins, rowIndex-1, obj);
 
 
 

@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-<!-- Source of modal code: https://vuejs.org/v2/examples/modal.html -->
 
 <html>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-<link rel="stylesheet" type="text/css" href="modal.css">
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="style.css">
   </head>
 
 <body>
@@ -27,9 +26,9 @@
       </tr>
       <tr v-for="admin in admins">
         <td>{{ admin.admin_id }}</td>
-        <td v-html=admin.email></td>
-        <td v-html=admin.password></td>
-        <td v-html=admin.creation_date></td>
+        <td>{{ admin.email }}</td>
+        <td>{{ admin.password }}</td>
+        <td>{{ admin.creation_date }}</td>
         <td><button v-on:click="editAdmin">Edit</button></td>
         <td><button v-on:click="deleteAdmin">Delete</button></td>
       </tr>
@@ -45,6 +44,6 @@
 
 </div>
 </body>
-<script src="test_site.js"></script>
+<script src="admin.js"></script>
 
 </html>
