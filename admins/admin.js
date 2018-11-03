@@ -1,6 +1,8 @@
 //Test page for Serpens::WEB3 Project
 //shows functionality of administrators table
 
+const URL = "https://serpens-cs467.appspot.com";
+
 var app = new Vue({
   el: '#app',
   data: {
@@ -8,13 +10,14 @@ var app = new Vue({
   },
   created() {
 	  var vm = this;
-      fetch("https://serpens-cs467.appspot.com/API/admins")
+      fetch(URL + "/API/admins")
       .then(function(response) {
   			return response.json();
   		})
 		.then(function(myJson) {
 			vm.admins = myJson
-		});
+		})
+    .catch(function(err){console.log(err)});
 
   },
 
@@ -27,7 +30,7 @@ var app = new Vue({
     },
     refreshAdmins: function() {
       var vm = this;
-      fetch("https://serpens-cs467.appspot.com/API/admins")
+      fetch(URL + "/API/admins")
   		.then(function(response) {
   			return response.json();
   		})
@@ -53,7 +56,7 @@ var app = new Vue({
         "creation_date": creation_date
       }
 
-      fetch("https://serpens-cs467.appspot.com/API/admins", {
+      fetch(URL + "/API/admins", {
         method: 'POST', // or 'PUT'
         body: JSON.stringify(obj), // data can be `string` or {object}!
         headers:{
@@ -69,7 +72,7 @@ var app = new Vue({
     deleteAdmin: function(event) {
       var vm = this;
       var adminId = event.toElement.parentNode.parentNode.firstChild.innerHTML
-      fetch("https://serpens-cs467.appspot.com/API/admins" + adminId, {
+      fetch(URL + "/API/admins/" + adminId, {
         method: 'DELETE',    })
         .then(response => vm.refreshAdmins())
         .catch(error => console.error('Error:', error));

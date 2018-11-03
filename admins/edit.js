@@ -1,4 +1,6 @@
 
+const URL = "https://serpens-cs467.appspot.com/";
+
 //Waits for page to load
 document.addEventListener("DOMContentLoaded", bindButton);
 
@@ -89,7 +91,7 @@ function bindButton() {
     console.log(adminId);
 
     //Opens a new async GET request to update the mySQL table
-    fetch("https://serpens-cs467.appspot.com/API/admins" + adminId, {
+    fetch(URL + "/API/admins/" + adminId, {
       method: 'PUT',
       body: JSON.stringify(obj),
       headers:{

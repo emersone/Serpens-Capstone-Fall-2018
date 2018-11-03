@@ -14,9 +14,15 @@ const handlebars = require('express-handlebars').create({defaultLayout:'main'});
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
+app.use(session({
+  secret: "thisisapassword1",
+  resave: false,
+  saveUninitialized: false
+          }));
+session.loggedIn = 0;
 
 /* ******************* Frontend Pages ******************* */
-
+app.use('/static', express.static('public'));
 app.use('/admins', express.static(path.join(__dirname, '/admins')));
 // app.use('/login/admins', express.static(path.join(__dirname, '/login/admins')));
 // app.use('/users', express.static(path.join(__dirname, 'users')));
@@ -34,8 +40,71 @@ const server = app.listen(process.env.PORT || 8080, () => {
 });
 
 
-app.get('/', function (req, res) {
-	res.send('Homepage');
+/* ******************* Login Functions ******************* */
+
+//display login page
+app.get('/', function(req, res) {
+    console.log("in login.js get");
+    var context = {};
+    res.render('login', context);
+});
+
+app.get("/logOut", function(req, res){
+  if (session.loggedIn) {
+    session.loggedIn = 0;
+  }
+  res.redirect("/");
+});
+
+const checkUserLogin = (email, password) => {
+	var SQL = "SELECT user_id, fname FROM users WHERE email = ? AND password = ?";
+	var inserts = [email, password];
+	return new Promise((resolve, reject) => {
+		mysql.pool.query(SQL, inserts, (error, results) => {
+	      if (!_.isEmpty(results)) {
+	      	resolve({id: results[0].user_id, name: results[0].fname});
+	      }
+	      reject(error);
+    	});
+	})
+	.catch(() => null);
+};
+
+const checkAdminLogin = (email, password) => {
+	var SQL = "SELECT admin_id FROM administrators WHERE email = ? AND password = ?";
+	var inserts = [email, password];
+	return new Promise((resolve, reject) => {
+		mysql.pool.query(SQL, inserts, (error, results) => {
+	      if (!_.isEmpty(results)) {
+	      	resolve({id: results[0].admin_id, name: email});
+	      }
+	      reject(error);
+    	});
+	})
+	.catch(() => null);
+};
+
+
+app.post('/', (req, res) => {
+	Promise.all([checkUserLogin(req.body.email, req.body.password), checkAdminLogin(req.body.email, req.body.password)])
+		.then((results) => {
+			if (results[0] !== null) {
+				session.loggedIn = results[0].id;
+				res.render('userLanding', results[0]);
+			}
+			else if (results[1] !== null) {
+				session.loggedIn = results[1].id;
+				res.render('adminLanding', results[1]);
+			}
+			else {
+				res.render('loginError', {});
+			}
+		})
+		.catch((err) => {
+			console.log("Error in login attempt");
+			console.log(err);
+			res.render('loginError', {});
+		});
 });
 
 
