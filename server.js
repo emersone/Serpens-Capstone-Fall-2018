@@ -330,7 +330,7 @@ app.post('/API/users', (req, res) => {
 /*------------- Get all users -------------*/
 app.get('/API/users', (req, res) => {
 	var context = {};
-	var sql = 'SELECT admin_id, email, creation_date, fname, lname FROM users';
+	var sql = 'SELECT user_id, email, creation_date, fname, lname FROM users';
 
 	mysql.pool.query (sql, function(err, rows, fields){
 		if(err){
