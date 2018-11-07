@@ -6,6 +6,8 @@ var app = new Vue({
 	   params: [],
      email: "",
      creation_date: "",
+     fname: "",
+     lname: ""
   },
   created() {
     //Arguments sent in through the URL
@@ -63,26 +65,31 @@ var app = new Vue({
     }
     this.email = params.email;
     this.creation_date = params.creation_date;
+    this.fname = params.fname;
+    this.lname = params.lname;
     this.params = params
   },
   methods: {
     submitEdit: function() {
       //Gets the new values out of the HTML document
-      var adminId = this.params.admin_id;
+      var userId = this.params.user_id;
       var email = document.getElementById("email").value;
       var password = document.getElementById("password").value;
       var creation_date = document.getElementById("creation_date").value;
+      var fname = document.getElementById("fname").value;
+      var lname = document.getElementById("lname").value;
+
 
       var obj = {
         "email": email,
         "password": password,
-        "creation_date":creation_date
+        "creation_date":creation_date,
+        "fname": fname,
+        "lname": lname
       }
-      console.log(obj);
-      console.log(adminId);
 
       //Opens a new async GET request to update the mySQL table
-      fetch(URL + "/API/admins/" + adminId, {
+      fetch(URL + "/API/users/" + userId, {
         method: 'PUT',
         body: JSON.stringify(obj),
         headers:{

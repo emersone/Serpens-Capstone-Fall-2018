@@ -25,7 +25,7 @@ session.loggedIn = 0;
 app.use('/static', express.static('public'));
 app.use('/admins', express.static(path.join(__dirname, '/admins')));
 // app.use('/login/admins', express.static(path.join(__dirname, '/login/admins')));
-// app.use('/users', express.static(path.join(__dirname, 'users')));
+//app.use('/users', express.static(path.join(__dirname, 'users')));
 // app.use('/login/users', express.static(path.join(__dirname, '/login/users')));
 
 app.engine('handlebars', handlebars.engine);
@@ -113,8 +113,6 @@ app.post('/', (req, res) => {
 /*------------- Create an admin -------------*/
 app.post('/API/admins', (req, res) => {
 	var context = {};
-	console.log("here");
-	console.log(req.body);
 
 	//Check that email field exists in request
   if(req.body.email === null ||
@@ -161,7 +159,6 @@ app.post('/API/admins', (req, res) => {
 
 /*------------- Get all admins -------------*/
 app.get('/API/admins', (req, res) => {
-	var context = {};
 	var sql = 'SELECT admin_id, email, creation_date FROM administrators';
 
 	mysql.pool.query (sql, function(err, rows, fields){
@@ -171,8 +168,6 @@ app.get('/API/admins', (req, res) => {
 			res.status(400).send(err);
 			return;
 		}
-
-		context.results = JSON.stringify(rows);
 		res.header('Access-Control-Allow-Origin', '*');
  		res.status(200).send(rows);
 	});
@@ -204,9 +199,6 @@ app.put('/API/admins/:admin_id', (req, res) => {
 	var context = {};
 	var sql = "";
 	var record = [];
-	console.log("here");
-	console.log(req.body);
-	console.log(req.body.password);
 
 	//Update with or without password
 	if(req.body.password === null || req.body.password === undefined || req.body.password === "") {
@@ -261,6 +253,7 @@ app.delete('/API/admins/:admin_id', (req, res) => {
 app.post('/API/users', (req, res) => {
 	var context = {};
 
+  console.log(req.body);
 	//Check that email field exists in request
   if(req.body.email === null ||
 		 req.body.email === undefined ||
@@ -304,22 +297,22 @@ app.post('/API/users', (req, res) => {
 	//TODO Validation for TIMESTAMP format
 
 	//Create variable to prepare data for insertion into table
-	var sql = 'INSERT INTO users (email, password, creation_date, fname, lname) VALUES (?,?,?,?,?)';
-	var record = [req.body.email,
+	var sql = 'INSERT INTO users (user_id, email, password, creation_date, fname, lname) VALUES (?,?,?,?,?,?)';
+	var record = [req.body.user_id,
+                req.body.email,
 							  req.body.password,
 								req.body.creation_date,
 								req.body.fname,
 								req.body.lname];
 
-	//Insert row into administrators table
-	mysql.pool.query(sql, record, function(err, result) {
+	//Insert row into users table
+  mysql.pool.query(sql, record, function(err, result) {
 			if(err) {
 				console.log(err);
 				JSON.stringify(err);
 				res.status(400).send(err);
 				return;
 			}
-
 			//TODO return id?
 			res.status(200).end();
 			return;
@@ -329,8 +322,7 @@ app.post('/API/users', (req, res) => {
 
 /*------------- Get all users -------------*/
 app.get('/API/users', (req, res) => {
-	var context = {};
-	var sql = 'SELECT admin_id, email, creation_date, fname, lname FROM users';
+	var sql = 'SELECT user_id, email, password, creation_date, fname, lname FROM users';
 
 	mysql.pool.query (sql, function(err, rows, fields){
 		if(err){
@@ -339,10 +331,8 @@ app.get('/API/users', (req, res) => {
 			res.status(400).send(err);
 			return;
 		}
-
-		context.results = JSON.stringify(rows);
-		console.log(context);
- 		res.status(200).send(context);
+    res.header('Access-Control-Allow-Origin', '*');
+ 		res.status(200).send(rows);
 	});
 });
 
@@ -350,7 +340,7 @@ app.get('/API/users', (req, res) => {
 /*------------- Get a specific user -------------*/
 app.get('/API/users/:user_id', (req, res) => {
 	var context = {};
-	var sql = 'SELECT admin_id, email, creation_date, fname, lname FROM users WHERE user_id = ?';
+	var sql = 'SELECT user_id, email, password, creation_date, fname, lname FROM users WHERE user_id = ?';
 
 	mysql.pool.query (sql, req.params.user_id, function(err, rows, fields){
 		if(err){
@@ -374,18 +364,20 @@ app.put('/API/users/:user_id', (req, res) => {
 	var record = [];
 
 	//Update with or without password
-	if(req.body.password != null || req.body.password != undefined || req.body.password != "") {
-		sql = 'UPDATE administrators SET email = ?, creation_date = ?, fname = ?, lname = ? WHERE admin_id = ?';
-		record = [req.body.email, req.body.creation_date, req.body.fname, req.body.lname, req.params.admin_id];
+	if(req.body.password === null || req.body.password === undefined || req.body.password === "") {
+		sql = 'UPDATE users SET email = ?, creation_date = ?, fname = ?, lname = ? WHERE user_id = ?';
+		record = [req.body.email, req.body.creation_date, req.body.fname, req.body.lname, req.params.user_id];
 	} else {
-			sql = 'UPDATE administrators SET email = ?, password = ?, creation_date = ?, fname = ?, lname = ? WHERE admin_id = ?';
+			sql = 'UPDATE users SET email = ?, password = ?, creation_date = ?, fname = ?, lname = ? WHERE user_id = ?';
 			record = [req.body.email,
 									req.body.password,
 									req.body.creation_date,
-									req.body.fname,
-									req.body.lname,
-									req.params.admin_id];
+                  req.body.fname,
+                  req.body.lname,
+									req.params.user_id];
 	}
+	console.log(sql);
+	console.log(record);
 
 	mysql.pool.query (sql, record, function(err, rows, fields){
 		if(err){

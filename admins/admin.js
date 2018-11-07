@@ -1,26 +1,18 @@
 //Test page for Serpens::WEB3 Project
 //shows functionality of administrators table
 
-const URL = "https://serpens-cs467.appspot.com";
+const URL = "http://localhost:8080";
 
 var app = new Vue({
   el: '#app',
   data: {
-	   admins: {},
+	   admins: [],
+     users: []
   },
   created() {
-	  var vm = this;
-      fetch(URL + "/API/admins")
-      .then(function(response) {
-  			return response.json();
-  		})
-		.then(function(myJson) {
-			vm.admins = myJson
-		})
-    .catch(function(err){console.log(err)});
-
+    this.refreshAdmins();
+	  this.refreshUsers();
   },
-
   methods: {
     clearAdmins: function() {
       var length = this.admins.length;
@@ -35,6 +27,7 @@ var app = new Vue({
   			return response.json();
   		})
   		.then(function(json) {
+        console.log(json)
         vm.clearAdmins();
         for(i in json) {
           vm.admins.push(json[i]);
@@ -65,12 +58,9 @@ var app = new Vue({
       }).then(res => vm.refreshAdmins())
       .catch(error => console.error('Error:', error));
 
-      // $.post("http://localhost:8080/API/admins", obj, function(res) {
-      //   vm.refreshAdmins()
-      // });
   },
     deleteAdmin: function(event) {
-      var vm = this;
+      var vm1 = this;
       var adminId = event.toElement.parentNode.parentNode.firstChild.innerHTML
       fetch(URL + "/API/admins/" + adminId, {
         method: 'DELETE',    })
@@ -78,23 +68,97 @@ var app = new Vue({
         .catch(error => console.error('Error:', error));
     },
     editAdmin: function(event) {
-      var vm = this;
+      var vm1 = this;
 
       var adminId = event.toElement.parentNode.parentNode.firstChild.innerHTML
       var email = event.toElement.parentNode.parentNode.childNodes[2].innerHTML
-      var password = event.toElement.parentNode.parentNode.childNodes[4].innerHTML
-      var creation_date = event.toElement.parentNode.parentNode.childNodes[6].innerHTML
+      var creation_date = event.toElement.parentNode.parentNode.childNodes[4].innerHTML
       var rowIndex = event.toElement.parentNode.parentNode.rowIndex
 
         window.location.href = "edit.html?admin_id=" + adminId +
-                               "&email=" + email + "&password=" + password +
+                               "&email=" + email +
                                "&creation_date=" + creation_date;
 
 
-      //Vue.set(this.admins, rowIndex-1, obj);
+    },
+    clearUsers: function() {
+        var length = this.users.length;
+        for (var i = 0; i < length; i++) {
+          this.users.pop();
+        }
+      },
+    refreshUsers: function() {
+        var vm = this;
+        fetch(URL + "/API/users")
+    		.then(function(response) {
+    			return response.json();
+    		})
+    		.then(function(json) {
+          console.log(json)
+          vm.clearUsers();
+          for(i in json) {
+            vm.users.push(json[i]);
+          }
+    		})
+        .catch(function(err){
+          console.log(err);
+        })
+      },
+      addUser: function(event) {
+        var vm = this;
+        email = document.getElementById("email_user").value.trim();
+        password = document.getElementById("password_user").value.trim();
+        creation_date = document.getElementById("creation_date_user").value.trim();
+        fname = document.getElementById("fname").value.trim();
+        lname = document.getElementById("lname").value.trim();
 
+        obj = {
+          "email": email,
+          "password": password,
+          "creation_date": creation_date,
+          "fname": fname,
+          "lname": lname
+        }
+        console.log(obj);
 
+        fetch(URL + "/API/users", {
+          method: 'POST', // or 'PUT'
+          body: JSON.stringify(obj), // data can be `string` or {object}!
+          headers:{
+            'Content-Type': 'application/json'
+          }
+        }).then(res => vm.refreshUsers())
+        .catch(error => console.error('Error:', error));
 
     },
-  }
+      deleteUser: function(event) {
+        var vm = this;
+        var userId = event.toElement.parentNode.parentNode.firstChild.innerHTML
+        fetch(URL + "/API/users/" + userId, {
+          method: 'DELETE',    })
+          .then(response => vm.refreshUsers())
+          .catch(error => console.error('Error:', error));
+      },
+
+      editUser: function(event) {
+        var vm = this;
+
+        var userId = event.toElement.parentNode.parentNode.firstChild.innerHTML
+        var email = event.toElement.parentNode.parentNode.childNodes[2].innerHTML
+        var creation_date = event.toElement.parentNode.parentNode.childNodes[4].innerHTML
+        var fname = event.toElement.parentNode.parentNode.childNodes[6].innerHTML
+        var lname = event.toElement.parentNode.parentNode.childNodes[8].innerHTML
+        var rowIndex = event.toElement.parentNode.parentNode.rowIndex
+
+          window.location.href = "edit_user.html?user_id=" + userId +
+                                 "&email=" + email +
+                                 "&creation_date=" + creation_date +
+                                 "&fname=" +  fname + "&lname=" +  lname;
+
+      },
+    }
+
 })
+
+
+/*----------------------------------USERS----------------------------------*/

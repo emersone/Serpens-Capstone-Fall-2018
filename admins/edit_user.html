@@ -10,7 +10,7 @@
 
 <body>
   <div id="app">
-    <h2>Edit Administrator</h2>
+    <h2>Edit User</h2>
     <br>
     <label>Email:
       <input placeholder="email" id='email' type = "text" :value = "email">
@@ -21,12 +21,18 @@
     <label>Creation Date:
       <input placeholder="creation_date" id='creation_date' type = "text" :value = "creation_date">
       </label><br></br>
+    <label>First Name:
+        <input placeholder="fname" id='fname' type = "text" :value = "fname">
+        </label><br></br>
+    <label>Last Name:
+      <input placeholder="lname" id='lname' type = "text" :value = "lname">
+        </label><br></br>
       <button v-on:click="submitEdit">Submit Edit</button>
   </div>
 </body>
 
 
 
-<script src="edit.js"></script>
+<script src="edit_user.js"></script>
 
 </html>
