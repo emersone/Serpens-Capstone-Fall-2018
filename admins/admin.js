@@ -1,6 +1,7 @@
 //Test page for Serpens::WEB3 Project
 //shows functionality of administrators table
 
+//const URL = "https://serpens-cs467.appspot.com/";
 const URL = "http://localhost:8080";
 
 var app = new Vue({
@@ -41,12 +42,21 @@ var app = new Vue({
       var vm = this;
       email = document.getElementById("email").value.trim();
       password = document.getElementById("password").value.trim();
+      fname = document.getElementById("fname").value.trim();
+      lname  = document.getElementById("lname").value.trim();
       creation_date = document.getElementById("creation_date").value.trim();
+      branch_id = document.getElementById("branch_id").value.trim();
+      sig_id = document.getElementById("sig_id").value.trim();
 
       obj = {
         "email": email,
         "password": password,
-        "creation_date": creation_date
+        "fname": fname,
+        "lname": lname,
+        "creation_date": creation_date,
+        "isAdmin": 1,
+        "branch_id": branch_id,
+        "sig_id": sig_id,
       }
 
       fetch(URL + "/API/admins", {
@@ -64,7 +74,7 @@ var app = new Vue({
       var adminId = event.toElement.parentNode.parentNode.firstChild.innerHTML
       fetch(URL + "/API/admins/" + adminId, {
         method: 'DELETE',    })
-        .then(response => vm.refreshAdmins())
+        .then(response => vm1.refreshAdmins())
         .catch(error => console.error('Error:', error));
     },
     editAdmin: function(event) {
@@ -72,14 +82,20 @@ var app = new Vue({
 
       var adminId = event.toElement.parentNode.parentNode.firstChild.innerHTML
       var email = event.toElement.parentNode.parentNode.childNodes[2].innerHTML
-      var creation_date = event.toElement.parentNode.parentNode.childNodes[4].innerHTML
+      var fname = event.toElement.parentNode.parentNode.childNodes[4].innerHTML
+      var lname = event.toElement.parentNode.parentNode.childNodes[6].innerHTML
+      var creation_date = event.toElement.parentNode.parentNode.childNodes[8].innerHTML
+      var branch_id = event.toElement.parentNode.parentNode.childNodes[10].innerHTML
+      var sig_id = event.toElement.parentNode.parentNode.childNodes[12].innerHTML
       var rowIndex = event.toElement.parentNode.parentNode.rowIndex
 
-        window.location.href = "edit.html?admin_id=" + adminId +
+        window.location.href = "edit.html?user_id=" + adminId +
                                "&email=" + email +
-                               "&creation_date=" + creation_date;
-
-
+                               "&fname=" + fname +
+                               "&lname=" + lname +
+                               "&creation_date=" + creation_date +
+                               "&branch_id=" + branch_id +
+                               "&sig_id=" + sig_id;
     },
     clearUsers: function() {
         var length = this.users.length;
@@ -104,31 +120,37 @@ var app = new Vue({
           console.log(err);
         })
       },
-      addUser: function(event) {
-        var vm = this;
-        email = document.getElementById("email_user").value.trim();
-        password = document.getElementById("password_user").value.trim();
-        creation_date = document.getElementById("creation_date_user").value.trim();
-        fname = document.getElementById("fname").value.trim();
-        lname = document.getElementById("lname").value.trim();
+    addUser: function(event) {
+      var vm = this;
+      email = document.getElementById("user_email").value.trim();
+      password = document.getElementById("user_password").value.trim();
+      fname = document.getElementById("user_fname").value.trim();
+      lname  = document.getElementById("user_lname").value.trim();
+      creation_date = document.getElementById("user_creation_date").value.trim();
+      branch_id = document.getElementById("user_branch_id").value.trim();
+      sig_id = document.getElementById("user_sig_id").value.trim();
 
-        obj = {
-          "email": email,
-          "password": password,
-          "creation_date": creation_date,
-          "fname": fname,
-          "lname": lname
+      obj = {
+        "email": email,
+        "password": password,
+        "fname": fname,
+        "lname": lname,
+        "creation_date": creation_date,
+        "isAdmin": 0,
+        "branch_id": branch_id,
+        "sig_id": sig_id,
+      }
+
+      console.log(obj)
+
+      fetch(URL + "/API/users", {
+        method: 'POST', // or 'PUT'
+        body: JSON.stringify(obj), // data can be `string` or {object}!
+        headers:{
+          'Content-Type': 'application/json'
         }
-        console.log(obj);
-
-        fetch(URL + "/API/users", {
-          method: 'POST', // or 'PUT'
-          body: JSON.stringify(obj), // data can be `string` or {object}!
-          headers:{
-            'Content-Type': 'application/json'
-          }
-        }).then(res => vm.refreshUsers())
-        .catch(error => console.error('Error:', error));
+      }).then(res => vm.refreshUsers())
+      .catch(error => console.error('Error:', error));
 
     },
       deleteUser: function(event) {
@@ -139,21 +161,25 @@ var app = new Vue({
           .then(response => vm.refreshUsers())
           .catch(error => console.error('Error:', error));
       },
-
       editUser: function(event) {
         var vm = this;
 
         var userId = event.toElement.parentNode.parentNode.firstChild.innerHTML
         var email = event.toElement.parentNode.parentNode.childNodes[2].innerHTML
-        var creation_date = event.toElement.parentNode.parentNode.childNodes[4].innerHTML
-        var fname = event.toElement.parentNode.parentNode.childNodes[6].innerHTML
-        var lname = event.toElement.parentNode.parentNode.childNodes[8].innerHTML
+        var fname = event.toElement.parentNode.parentNode.childNodes[4].innerHTML
+        var lname = event.toElement.parentNode.parentNode.childNodes[6].innerHTML
+        var creation_date = event.toElement.parentNode.parentNode.childNodes[8].innerHTML
+        var branch_id = event.toElement.parentNode.parentNode.childNodes[10].innerHTML
+        var sig_id = event.toElement.parentNode.parentNode.childNodes[12].innerHTML
         var rowIndex = event.toElement.parentNode.parentNode.rowIndex
 
           window.location.href = "edit_user.html?user_id=" + userId +
-                                 "&email=" + email +
-                                 "&creation_date=" + creation_date +
-                                 "&fname=" +  fname + "&lname=" +  lname;
+          "&email=" + email +
+          "&fname=" + fname +
+          "&lname=" + lname +
+          "&creation_date=" + creation_date +
+          "&branch_id=" + branch_id +
+          "&sig_id=" + sig_id;
 
       },
     }

@@ -1,3 +1,4 @@
+//const URL = "https://serpens-cs467.appspot.com/";
 const URL = "http://localhost:8080";
 
 var app = new Vue({
@@ -5,7 +6,10 @@ var app = new Vue({
   data: {
 	   params: [],
      email: "",
+     fname: "",
+     lname: "",
      creation_date: "",
+     branch_id: "",
   },
   created() {
     //Arguments sent in through the URL
@@ -61,25 +65,35 @@ var app = new Vue({
       //Increments end
       end++;
     }
-    this.email = params.email;
-    this.creation_date = params.creation_date;
+    var creation_date = moment(unescape(params.creation_date), ["YYYY-MM-DDTHH:mm:ssZ","YYYY-MM-DD HH:mm:ss"]).format("YYYY-MM-DD HH:mm:ss").toString();
+    console.log(creation_date)
+    this.email = unescape(params.email);
+    this.fname = unescape(params.fname);
+    this.lname = unescape(params.lname);
+    this.creation_date = creation_date;
+    this.branch_id = unescape(params.branch_id);
     this.params = params
   },
   methods: {
     submitEdit: function() {
       //Gets the new values out of the HTML document
-      var adminId = this.params.admin_id;
+      var adminId = this.params.user_id;
       var email = document.getElementById("email").value;
+      var fname = document.getElementById("fname").value;
+      var lname = document.getElementById("lname").value;
       var password = document.getElementById("password").value;
       var creation_date = document.getElementById("creation_date").value;
+      var branch_id = document.getElementById("branch_id").value;
 
       var obj = {
         "email": email,
         "password": password,
-        "creation_date":creation_date
+        "fname": fname,
+        "lname": lname,
+        "creation_date": creation_date,
+        "branch_id": branch_id,
+        "user_id": adminId
       }
-      console.log(obj);
-      console.log(adminId);
 
       //Opens a new async GET request to update the mySQL table
       fetch(URL + "/API/admins/" + adminId, {
