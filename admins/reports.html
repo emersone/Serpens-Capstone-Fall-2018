@@ -11,86 +11,29 @@
 
 <body>
 
-<!-- Displays Administrators table -->
-<h2>Administrators</h2>
+
+<h2>Create Reports</h2>
 <div id="app">
+  <select  v-bind:id="'entities'">
+    <option value="users">Users who have given</option>
+    <option value="branches">Branches whose users have given</option>
+    <option value="regions">Regions whose users have given</option>
+  </select>
 
-  <table>
-      <tr>
-		<th>Admin Id</th>
-        <th>Email</th>
-        <th>Creation Date</th>
-        <th>Edit</th>
-        <th>Delete</th>
-      </tr>
-      <tr v-for="admin in admins">
-        <td>{{ admin.admin_id }}</td>
-        <td>{{ admin.email }}</td>
-        <td>{{ admin.creation_date }}</td>
-        <td><button v-on:click="editAdmin">Edit</button></td>
-        <td><button v-on:click="deleteAdmin">Delete</button></td>
-      </tr>
-  </table>
+  <p> the most </p>
 
+  <select  v-bind:id="'award'">
+    <option value="awards">awards</option>
+    <option value="eotm_awards">Employee of the Month awards</option>
+    <option value="btp_awards">Best Team Player awards</option>
+  </select>
 
-<!-- Handles adding a new administator -->
-  <br></br>
-  <input placeholder="email" v-bind:id="'email'" type = "text" value = ""></input>
-  <input placeholder="password" v-bind:id="'password'" type = "text" value = ""></input>
-  <input placeholder="creation_date" v-bind:id="'creation_date'" type = "text" value = ""></input>
-  <button v-on:click="addAdmin">Add Administrator</button>
+  <p><button v-on:click="submit"><b>Submit</b></button></p>
 
-<!-- Displays Administrators table -->
-<br>
-<h2>Users</h2>
-
-  <table>
-      <tr>
-		<th>User Id</th>
-        <th>Email</th>
-        <th>Creation Date</th>
-        <th>First Name</th>
-        <th>Last Name</th>
-        <th>Edit</th>
-        <th>Delete</th>
-      </tr>
-      <tr v-for="user in users">
-        <td>{{ user.user_id }}</td>
-        <td>{{ user.email }}</td>
-        <td>{{ user.creation_date }}</td>
-        <td>{{ user.fname }}</td>
-        <td>{{ user.lname }}</td>
-        <td><button v-on:click="editUser">Edit</button></td>
-        <td><button v-on:click="deleteUser">Delete</button></td>
-      </tr>
-  </table>
-
-  <!-- Handles adding a new user -->
-    <br></br>
-    <input placeholder="email" v-bind:id="'email_user'" type = "text" value = ""></input>
-    <input placeholder="password" v-bind:id="'password_user'" type = "text" value = ""></input>
-    <input placeholder="creation_date" v-bind:id="'creation_date_user'" type = "text" value = ""></input>
-    <input placeholder="fname" v-bind:id="'fname'" type = "text" value = ""></input>
-    <input placeholder="lname" v-bind:id="'lname'" type = "text" value = ""></input>
-    <button v-on:click="addUser">Add User</button>
-
+  <p v-bind:id="'output'">{{ temp }}</p>
 
 </div>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 </body>
-<script src="admin.js"></script>
+<script src="reports.js"></script>
 
 </html>

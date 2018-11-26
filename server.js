@@ -1,5 +1,3 @@
-//Server-side code for the admins website
-
 //Set-up
 const path = require(`path`);
 const http = require(`http`);
