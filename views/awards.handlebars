@@ -1,0 +1,71 @@
+<link rel="stylesheet" href="style.css">
+<!--
+<form id="addAward" action="/awards" method="post">
+  <input type="submit" value="Create New Award">
+</form>
+
+-->
+<h1>Your Award History</H1>
+<table style="width: 90%">
+    <colgroup>
+       <col span="1" style="width: 5%;">
+       <col span="1" style="width: 18%;">
+       <col span="1" style="width: 19%;">
+       <col span="1" style="width: 20%;">
+       <col span="1" style="width: 23%;">
+       <col span="1" style="width: 15%;">
+    </colgroup>
+	<col width="10">
+    <thead>
+      <th>Award ID</th>
+      <th>Award Type</th>
+      <th>Recipient</th>
+      <th>Recipient Email</th>
+      <th>Date Awarded</th>
+      <th>Actions</th>
+    </thead>
+    <tbody>
+    	<tr>
+      	<form id="addAward" action="/awards" method="post">
+	        <td><input type="hidden" name="award_id">{{award_id}}</td>
+	        <td><select id="type" name="type">
+		    		<option value="Best Team Player">Best Team Player</option>
+		    		<option value="Employee of the Month">Employee of the Month</option>
+	    		</select>
+	    	</td>
+	        <td><input type="text" id="recip_name" name="recip_name"></td>
+	        <td><input type="text" id="recip_email" name="recip_email"></td>
+	        <td><input type="datetime-local" id="date_given"
+		       name="date_given" min="2013-01-01T00:00" max="2022-01-01T00:00">
+	        </td>
+	        <td>	     
+				<input type="submit" value="Submit New Award" name="add">
+	        </td>
+        </form>
+      </tr>
+      {{#each data}}
+      <tr>
+      	<form id="awardAction" action="/awards" method="post">
+	        <td><input type="hidden" value={{award_id}} name="award_id">{{award_id}}</td>
+	        <td><select id="type" name="type">
+		        	<option selected value="{{type}}">{{type}}</option>
+		    		<option value="Best Team Player">Best Team Player</option>
+		    		<option value="Employee of the Month">Employee of the Month</option>
+	    		</select>
+	    	</td>
+	        <td><input type="text" id="recip_name" name="recip_name" value="{{recip_name}}"></td>
+	        <td><input type="text" id="recip_email" name="recip_email" value={{recip_email}}></td>
+	        <td><input type="datetime-local" id="date_given"
+		       name="date_given" value={{date_given}}
+		       min="2013-01-01T00:00" max="2022-01-01T00:00">
+	        </td>
+	        <td>	     
+				<input type="submit" value="Delete" name="delete">
+				<input type="submit" value="Update" name="update">
+	        </td>
+        </form>
+      </tr>
+      {{/each}}
+    </tbody>
+ </table>
+

@@ -55,56 +55,143 @@ app.get("/logOut", function(req, res){
 });
 
 const checkUserLogin = (email, password) => {
-	var SQL = "SELECT user_id, fname FROM users WHERE email = ? AND password = ?";
-	var inserts = [email, password];
-	return new Promise((resolve, reject) => {
-		mysql.pool.query(SQL, inserts, (error, results) => {
-	      if (!_.isEmpty(results)) {
-	      	resolve({id: results[0].user_id, name: results[0].fname});
-	      }
-	      reject(error);
-    	});
-	})
-	.catch(() => null);
+  var SQL = "SELECT user_id, fname, branch_id, isAdmin FROM users WHERE email = ? AND password = ?";
+  var inserts = [email, password];
+  return new Promise((resolve, reject) => {
+    mysql.pool.query(SQL, inserts, (error, results) => {
+      if (!_.isEmpty(results)) {
+        resolve({id: results[0].user_id, name: results[0].fname, branch: results[0].branch_id, isAdmin: results[0].isAdmin});
+      }
+      reject(error);
+    });
+  })
+  .catch(() => null);
 };
-
-const checkAdminLogin = (email, password) => {
-	var SQL = "SELECT admin_id FROM administrators WHERE email = ? AND password = ?";
-	var inserts = [email, password];
-	return new Promise((resolve, reject) => {
-		mysql.pool.query(SQL, inserts, (error, results) => {
-	      if (!_.isEmpty(results)) {
-	      	resolve({id: results[0].admin_id, name: email});
-	      }
-	      reject(error);
-    	});
-	})
-	.catch(() => null);
-};
-
 
 app.post('/', (req, res) => {
-	Promise.all([checkUserLogin(req.body.email, req.body.password), checkAdminLogin(req.body.email, req.body.password)])
-		.then((results) => {
-			if (results[0] !== null) {
-				session.loggedIn = results[0].id;
-				res.render('userLanding', results[0]);
-			}
-			else if (results[1] !== null) {
-				session.loggedIn = results[1].id;
-				res.render('adminLanding', results[1]);
-			}
-			else {
-				res.render('loginError', {});
-			}
-		})
-		.catch((err) => {
-			console.log("Error in login attempt");
-			console.log(err);
-			res.render('loginError', {});
-		});
+  checkUserLogin(req.body.email, req.body.password)
+  .then((results) => {
+    if (_.isEmpty(results)) {
+      res.render('loginError', {});
+    }
+    else if (results.isAdmin === 0) {
+      session.loggedIn = results.id;
+      res.redirect("/awards");
+    }
+    else {
+      session.loggedIn = results.id;
+      res.redirect("/admins");
+    }
+  })
+  .catch((err) => {
+    console.log("Error in login attempt");
+    console.log(err);
+    res.render('loginError', {});
+  });
 });
 
+/* ******************* User Page Functions ***************** */
+const getAwards = (user_id) => {
+  var SQL = "SELECT * FROM users.awards WHERE creator_user_id = " + user_id;
+  //  	var inserts = [user_id];
+  return new Promise((resolve, reject) => {
+    mysql.pool.query(SQL, (error, results) => {
+      if (error) {
+        console.log(error);
+        console.log(results);
+        reject(error);
+      }
+      resolve(results.map((entry) => {
+	      entry.date_given = entry.date_given.toISOString().slice(0,16);
+	      return entry;
+	    }));
+    });
+  })
+  .catch(() => null);
+};
+
+const newAward = (data, user_id) => {
+  var SQL = "INSERT INTO awards (creator_user_id, type, recip_name, recip_email, date_given) VALUES (?, ?, ?, ?, ?)";
+  var inserts = [user_id, data.type, data.recip_name, data.recip_email, data.date_given];
+	return new Promise((resolve, reject) => {
+		mysql.pool.query(SQL, inserts, (error, results) => {
+	      if (!_.isEmpty(results)) {
+	      	resolve({});
+	      }
+	      reject(error);
+    	});
+	})
+	.catch(() => null);
+};
+
+const deleteAward = (award_id, user_id) => {
+  var SQL = `DELETE FROM users.awards WHERE award_id = ${award_id} AND creator_user_id = ${user_id}`;
+  return new Promise((resolve, reject) => {
+    mysql.pool.query(SQL, (error, results) => {
+      if (error) {
+        console.log(error);
+        console.log(results);
+        reject(error);
+      }
+      resolve(results);
+    });
+  })
+  .catch(() => null);
+};
+
+const updateAward = (data, user_id) => {
+  var SQL = "UPDATE users.awards SET type=?, recip_name=?, recip_email=?, date_given=? WHERE award_id=? AND creator_user_id=?";
+  var inserts = [data.type, data.recip_name, data.recip_email, data.date_given, parseInt(data.award_id, 10), user_id];
+//  console.log(inserts);
+  return new Promise((resolve, reject) => {
+    mysql.pool.query(SQL, inserts, (error, results) => {
+      if (!_.isEmpty(results)) {
+        resolve({});
+      }
+      reject(error);
+    });
+  })
+  .catch(() => null);
+};
+
+app.get("/awards", (req, res) => {
+  const thisUser = session.loggedIn;
+  getAwards(thisUser).then((data) => {
+    res.render('awards', {"data": data});
+  });
+
+});
+
+app.post("/awards", (req, res) => {
+  //	console.log(req.body);
+  const thisUser = session.loggedIn;
+  if (Object.keys(req.body).indexOf("delete") > -1) {
+    deleteAward(req.body.award_id, thisUser).then(() => {
+      getAwards(thisUser).then((data) => {
+        res.render('awards', {"data": data});
+      });
+    });
+  }
+  else if (Object.keys(req.body).indexOf("update") > -1) {
+    console.log("In update");
+    updateAward(req.body, thisUser).then(() => {
+      getAwards(thisUser).then((data) => {
+        res.render('awards', {"data": data});
+      });
+    });
+  }
+  else if (Object.keys(req.body).indexOf("add") > -1) {
+    console.log("In add");
+      newAward(req.body, thisUser).then(() => {
+      getAwards(thisUser).then((data) => {
+        res.render('awards', {"data": data});
+      });
+    });
+  }
+  else {
+    console.log("Error invalid");
+  }
+});
 
 /* ******************* Backend Functions ******************* */
 
