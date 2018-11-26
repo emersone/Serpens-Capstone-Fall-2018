@@ -53,6 +53,6 @@ textarea {
   background-color: #AED6F1;
 }
 
-#randomNo, #quoteNo {
-  border: none;
+#date_given, #recip_name {
+	width: 90%;
 }
