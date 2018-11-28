@@ -3,18 +3,36 @@
 <html>
 <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js" type="text/javascript"></script>  <head>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta charset="UTF-8">
     <link rel="stylesheet" type="text/css" href="style.css">
+
+    <nav class="navbar navbar-inverse">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a class="navbar-brand">Serpens, Inc.</a>
+        </div>
+        <ul class="nav navbar-nav">
+          <li class="active"><a href="http://localhost:8080/admins">Home</a></li>
+          <li><a href="http://localhost:8080/admins/reports.html">Create Reports</a></li>
+        </ul>
+        <ul class="nav navbar-nav navbar-right">
+          <li><a href="http://localhost:8080/"><span class="glyphicon glyphicon-log-in"></span> Logout</a></li>
+        </ul>
+      </div>
+    </nav>
+
   </head>
 
 <body>
 
 <!-- Displays Administrators table -->
-<h2>Administrators</h2>
 <div id="app">
 
+<h2>Administrators</h2>
   <table>
       <tr>
 		<th>Admin Id</th>
@@ -41,19 +59,33 @@
   </table>
 
 
-<!-- Handles adding a new administator -->
-  <br></br>
-  <input placeholder="email" v-bind:id="'email'" type = "text" value = ""></input>
-  <input placeholder="fname" v-bind:id="'fname'" type = "text" value = ""></input>
-  <input placeholder="lname" v-bind:id="'lname'" type = "text" value = ""></input>
-  <input placeholder="password" v-bind:id="'password'" type = "text" value = ""></input>
-  <input placeholder="creation_date" v-bind:id="'creation_date'" type = "text" value = ""></input>
-  <input placeholder="branch_id" v-bind:id="'branch_id'" type = "text" value = ""></input>
-  <input placeholder="sig_id" v-bind:id="'sig_id'" type = "text" value = ""></input>
-  <button v-on:click="addAdmin">Add Administrator</button>
+<!-- Trigger the modal with a button -->
+<br><button type="button" data-toggle="modal" data-target="#myModal">Add New Administrator</button>
+
+<!-- Modal -->
+<div id="myModal" class="modal fade" role="dialog">
+  <div class="modal-dialog">
+
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-body">
+        <label>Email: <input placeholder="email" v-bind:id="'email'" type = "text" value = ""></input></label><br>
+        <label>First Name: <input placeholder="fname" v-bind:id="'fname'" type = "text" value = ""></input></label><br>
+        <label>Last Name: <input placeholder="lname" v-bind:id="'lname'" type = "text" value = ""></input></label><br>
+        <label>Password: <input placeholder="password" v-bind:id="'password'" type = "text" value = ""></input></label><br>
+        <label>Creation Date: <input placeholder="creation_date" v-bind:id="'creation_date'" type = "text" value = ""></input></label><br>
+        <label>Branch ID: <input placeholder="branch_id" v-bind:id="'branch_id'" type = "text" value = ""></input></label><br>
+        <label>Signature ID: <input placeholder="sig_id" v-bind:id="'sig_id'" type = "text" value = ""></input></label><br><br>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" v-on:click="addAdmin">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- Displays Users table -->
-<br>
+<br><br>
 <h2>Users</h2>
 
   <table>
@@ -81,20 +113,32 @@
       </tr>
   </table>
 
-  <!-- Handles adding a new user -->
-    <br></br>
-    <input placeholder="email" v-bind:id="'user_email'" type = "text" value = ""></input>
-    <input placeholder="password" v-bind:id="'user_password'" type = "text" value = ""></input>
-    <input placeholder="fname" v-bind:id="'user_fname'" type = "text" value = ""></input>
-    <input placeholder="lname" v-bind:id="'user_lname'" type = "text" value = ""></input>
-    <input placeholder="creation_date" v-bind:id="'user_creation_date'" type = "text" value = ""></input>
-    <input placeholder="branch_id" v-bind:id="'user_branch_id'" type = "text" value = ""></input>
-    <input placeholder="sig_id" v-bind:id="'user_sig_id'" type = "text" value = ""></input>
-    <button v-on:click="addUser">Add User</button>
-    <br><br><br>
-    <p><button v-on:click="create_reports"><b>Create Reports</b></button></p>
+<!-- Handles adding a new user -->
+<!-- Trigger the modal with a button -->
+<br><button type="button" data-toggle="modal" data-target="#myModal2">Add New User</button>
 
+<!-- Modal -->
+<div id="myModal2" class="modal fade" role="dialog">
+  <div class="modal-dialog">
 
+    <!-- Modal content-->
+    <div class="modal-content">
+      <div class="modal-body">
+        <label>Email: <input placeholder="email" v-bind:id="'user_email'" type = "text" value = ""></input></label><br>
+        <label>First Name: <input placeholder="fname" v-bind:id="'user_fname'" type = "text" value = ""></input></label><br>
+        <label>Last Name: <input placeholder="lname" v-bind:id="'user_lname'" type = "text" value = ""></input></label><br>
+        <label>Password: <input placeholder="password" v-bind:id="'user_password'" type = "text" value = ""></input></label><br>
+        <label>Creation Date: <input placeholder="creation_date" v-bind:id="'user_creation_date'" type = "text" value = ""></input></label><br>
+        <label>Branch ID: <input placeholder="branch_id" v-bind:id="'user_branch_id'" type = "text" value = ""></input></label><br>
+        <label>Signature ID: <input placeholder="sig_id" v-bind:id="'user_sig_id'" type = "text" value = ""></input></label><br><br>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal" v-on:click="addUser">Submit</button>
+      </div>
+    </div>
+  </div>
+</div>
+<br><br><br>
 </div>
 
 </body>

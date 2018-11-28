@@ -502,6 +502,7 @@ console.log("GET /API/users/mostawards")
    from users as u left join (select user_id, count(award_id) as awardCount from \`user-awards\` group by user_id) as uac on u.user_id=uac.user_id
    left join \`user-awards\` as ua on ua.user_id=u.user_id
    left join awards as a on a.award_id=ua.award_id
+   where isAdmin = 0
    group by u.user_id
    order by \`count\` desc`;
 
@@ -529,7 +530,7 @@ console.log("GET /API/users/mostawards/eotm")
    from users as u left join (select user_id, count(award_id) as awardCount from \`user-awards\` group by user_id) as uac on u.user_id=uac.user_id
    left join \`user-awards\` as ua on ua.user_id=u.user_id
    left join awards as a on a.award_id=ua.award_id
-   where type="Best Team Player"
+   where type="Employee of the Month"
    group by u.user_id
    order by \`count\` desc`;
 
@@ -781,7 +782,7 @@ console.log("GET /API/users/mostawards/branch")
 			}
 
 			var results = JSON.stringify(rows);
-
+      console.log(results);
 			res.header('Access-Control-Allow-Origin', '*');
 			res.send(results);
 

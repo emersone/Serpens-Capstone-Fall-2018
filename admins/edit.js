@@ -87,9 +87,9 @@ var app = new Vue({
 
       var obj = {
         "email": email,
-        "password": password,
         "fname": fname,
         "lname": lname,
+        "password": password,
         "creation_date": creation_date,
         "branch_id": branch_id,
         "user_id": adminId
