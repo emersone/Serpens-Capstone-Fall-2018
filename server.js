@@ -11,6 +11,15 @@ const app = express();
 const _ = require("lodash");
 const session = require("express-session");
 const handlebars = require('express-handlebars').create({defaultLayout:'main'});
+const latex = require('node-latex');
+const fs = require('fs');
+const input = fs.createReadStream('./emp.tex');
+const output = fs.createWriteStream('./output.pdf');
+const pdf = latex(input);
+
+pdf.pipe(output);
+pdf.on('error', err => console.error(err));
+pdf.on('finish', () => console.log('PDF generated!'));
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -34,12 +43,24 @@ app.set('mysql', mysql);
 
 
 /* ******************* Start Server ******************* */
-const server = app.listen(process.env.PORT || 8080, () => {
+const server = app.listen(process.env.PORT || 30311, () => {
 	const port = server.address().port;
 	console.log(`App listening on port ${port}`);
 });
 
 
+	var context1 = {};
+	var sql = 'SELECT user_id, email, password, creation_date, fname, lname FROM users';
+
+	mysql.pool.query(sql, function(err, rows, fields){
+		if(err){
+			console.log(err);
+			JSON.stringify(err);
+		}else{
+
+		context1.results = JSON.stringify(rows);
+		console.log(context1);}
+	});
 /* ******************* Login Functions ******************* */
 
 //display login page
