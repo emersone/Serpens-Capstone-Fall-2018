@@ -290,6 +290,11 @@ app.post('/API/admins', (req, res) => {
 app.get('/API/admins', (req, res) => {
   console.log("GET /API/admins");
 
+  if (session.loggedIn === 0) {
+    res.status(403).end()
+    return
+  }
+
 	var sql = 'SELECT user_id, email, fname, lname, creation_date, branch_id, sig_id FROM users WHERE isAdmin = 1';
 
 	mysql.pool.query (sql, function(err, rows, fields){
@@ -308,6 +313,11 @@ app.get('/API/admins', (req, res) => {
 /*------------- Get a specific admin -------------*/
 app.get('/API/admins/:admin_id', (req, res) => {
   console.log("GET /API/admins/:admin_id");
+
+  if (session.loggedIn === 0) {
+    res.status(403).end()
+    return
+  }
 
 	var context = {};
 	var sql = 'SELECT user_id, email, fname, lname, creation_date, branch_id, sig_id FROM users WHERE user_id= ? && isAdmin = 1';
@@ -330,6 +340,11 @@ app.get('/API/admins/:admin_id', (req, res) => {
 /*------------- Edit an admin -------------*/
 app.put('/API/admins/:admin_id', (req, res) => {
   console.log("PUT /API/admins/:admin_id");
+
+  if (session.loggedIn === 0) {
+    res.status(403).end()
+    return
+  }
 
 	var context = {};
 	var sql = "";
@@ -367,6 +382,12 @@ app.put('/API/admins/:admin_id', (req, res) => {
 /*------------- Delete an admin -------------*/
 app.delete('/API/admins/:admin_id', (req, res) => {
   console.log("DELETE /API/admins/:admin_id");
+
+  if (session.loggedIn === 0) {
+    res.status(403).end()
+    return
+  }
+
 	var context = {};
 	var sql = 'DELETE FROM users WHERE user_id = ?';
 
@@ -388,6 +409,11 @@ app.delete('/API/admins/:admin_id', (req, res) => {
 /*------------- Create a user -------------*/
 app.post('/API/users', (req, res) => {
   console.log("POST /API/users")
+
+  if (session.loggedIn === 0) {
+    res.status(403).end()
+    return
+  }
 
   var context = {};
 
@@ -480,6 +506,11 @@ app.post('/API/users', (req, res) => {
 app.get('/API/users', (req, res) => {
   console.log("GET /API/users")
 
+  if (session.loggedIn === 0) {
+    res.status(403).end()
+    return
+  }
+
 	var sql = 'SELECT user_id, email, fname, lname, creation_date, isAdmin, branch_id, sig_id FROM users WHERE isAdmin = 0';
 
 	mysql.pool.query (sql, function(err, rows, fields){
@@ -498,6 +529,12 @@ app.get('/API/users', (req, res) => {
 /*------------- Report Filter: Users who have given Most Awards  -------------*/
 app.get('/API/users/mostawards', function(req, res, next) {
 console.log("GET /API/users/mostawards")
+
+if (session.loggedIn === 0) {
+  res.status(403).end()
+  return
+}
+
   var sql = `select u.user_id, u.email, u.password, u.fname, u.lname, u.creation_date, u.branch_id, ifNull(uac.awardCount, 0) as \`count\`
    from users as u left join (select user_id, count(award_id) as awardCount from \`user-awards\` group by user_id) as uac on u.user_id=uac.user_id
    left join \`user-awards\` as ua on ua.user_id=u.user_id
@@ -526,6 +563,12 @@ console.log("GET /API/users/mostawards")
 /*------------- Report Filter: Users who have given Most Awards: Employee of the Month  -------------*/
 app.get('/API/users/mostawards/eotm', function(req, res, next) {
 console.log("GET /API/users/mostawards/eotm")
+
+if (session.loggedIn === 0) {
+  res.status(403).end()
+  return
+}
+
   var sql = `select u.user_id, u.email, u.password, u.fname, u.lname, u.creation_date, u.branch_id, ifNull(uac.awardCount, 0) as \`count\`
    from users as u left join (select user_id, count(award_id) as awardCount from \`user-awards\` group by user_id) as uac on u.user_id=uac.user_id
    left join \`user-awards\` as ua on ua.user_id=u.user_id
@@ -554,6 +597,12 @@ console.log("GET /API/users/mostawards/eotm")
 /*------------- Report Filter: Users who have given Most Awards: Best Team Player  -------------*/
 app.get('/API/users/mostawards/btp', function(req, res, next) {
 console.log("GET /API/users/mostawards/btp")
+
+if (session.loggedIn === 0) {
+  res.status(403).end()
+  return
+}
+
   var sql = `select u.user_id, u.email, u.password, u.fname, u.lname, u.creation_date, u.branch_id, ifNull(uac.awardCount, 0) as \`count\`
    from users as u left join (select user_id, count(award_id) as awardCount from \`user-awards\` group by user_id) as uac on u.user_id=uac.user_id
    left join \`user-awards\` as ua on ua.user_id=u.user_id
@@ -584,6 +633,11 @@ console.log("GET /API/users/mostawards/btp")
 app.get('/API/users/:user_id', (req, res) => {
   console.log("GET /API/users/:user_id")
 
+  if (session.loggedIn === 0) {
+    res.status(403).end()
+    return
+  }
+
 	var context = {};
 	var sql = 'SELECT user_id, email, password, fname, lname, creation_date, isAdmin, branch_id, sig_id FROM users WHERE user_id = ? && isAdmin = 0';
 
@@ -605,6 +659,11 @@ app.get('/API/users/:user_id', (req, res) => {
 /*------------- Edit a user -------------*/
 app.put('/API/users/:user_id', (req, res) => {
   console.log("PUT /API/users/:user_id")
+
+  if (session.loggedIn === 0) {
+    res.status(403).end()
+    return
+  }
 
 	var context = {};
 	var sql = "";
@@ -641,6 +700,12 @@ app.put('/API/users/:user_id', (req, res) => {
 /*------------- Delete a user -------------*/
 app.delete('/API/users/:user_id', (req, res) => {
   console.log("DELETE /API/users/:user_id")
+
+  if (session.loggedIn === 0) {
+    res.status(403).end()
+    return
+  }
+
 	var context = {};
 	var sql = 'DELETE FROM users WHERE user_id = ?';
 
@@ -663,6 +728,11 @@ app.delete('/API/users/:user_id', (req, res) => {
 /*------------- Report Filter: Users who have assigned most awards BY REGION   -------------*/
 app.get('/API/users/mostawards/region', function(req, res, next) {
 console.log("GET /API/users/mostawards/region")
+
+if (session.loggedIn === 0) {
+  res.status(403).end()
+  return
+}
 
   var sql = `select b.region, ifNull(sum(count), 0) as number from
   branches as b left join
@@ -698,6 +768,11 @@ console.log("GET /API/users/mostawards/region")
 app.get('/API/users/mostawards/region/eotm', function(req, res, next) {
 console.log("GET /API/users/mostawards/region/eotm")
 
+if (session.loggedIn === 0) {
+  res.status(403).end()
+  return
+}
+
   var sql = `select b.region, ifNull(sum(count), 0) as number from
   branches as b left join
   (select u.user_id, u.branch_id, ifNull(uac.awardCount, 0) as \`count\`
@@ -731,6 +806,11 @@ console.log("GET /API/users/mostawards/region/eotm")
 /*------------- Report Filter: Users who have assigned most Best Team Player awards BY REGION   -------------*/
 app.get('/API/users/mostawards/region/btp', function(req, res, next) {
 console.log("GET /API/users/mostawards/region/btp")
+
+if (session.loggedIn === 0) {
+  res.status(403).end()
+  return
+}
 
   var sql = `select b.region, ifNull(sum(count), 0) as number from
   branches as b left join
@@ -766,6 +846,11 @@ console.log("GET /API/users/mostawards/region/btp")
 app.get('/API/users/mostawards/branch', function(req, res, next) {
 console.log("GET /API/users/mostawards/branch")
 
+if (session.loggedIn === 0) {
+  res.status(403).end()
+  return
+}
+
   var sql = `select branch_id, name, city, state, region, sum(\`count\`) as total from
   (select b.branch_id, b.name, b.city, b.state, b.region, ifNull(uac.awardCount, 0) as \`count\`
   from branches as b
@@ -793,6 +878,11 @@ console.log("GET /API/users/mostawards/branch")
 /*------------- Report Filter: Users who have assigned most Employee of the Month awards BY BRANCH   -------------*/
 app.get('/API/users/mostawards/branch/eotm', function(req, res, next) {
 console.log("GET /API/users/mostawards/branch/eotm")
+
+if (session.loggedIn === 0) {
+  res.status(403).end()
+  return
+}
 
   var sql = `select b.branch_id, b.name, b.city, b.state, b.region, ifNull(sum(count), 0) as number from
   branches as b left join
@@ -826,6 +916,11 @@ console.log("GET /API/users/mostawards/branch/eotm")
 /*------------- Report Filter: Users who have assigned most Best Team Player awards BY BRANCH   -------------*/
 app.get('/API/users/mostawards/branch/btp', function(req, res, next) {
 console.log("GET /API/users/mostawards/branch/btp")
+
+if (session.loggedIn === 0) {
+  res.status(403).end()
+  return
+}
 
   var sql = `select b.branch_id, b.name, b.city, b.state, b.region, ifNull(sum(count), 0) as number from
   branches as b left join
