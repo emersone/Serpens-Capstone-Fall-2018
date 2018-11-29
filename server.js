@@ -365,6 +365,18 @@ app.post("/awards", (req, res) => {
         });
       });
     }
+    else if (Object.keys(req.body).indexOf("email") > -1) {
+	  	console.log("In email");
+	  	// update in case user made changes
+	    Promise.all([updateAward(req.body, thisUser), getProfile(thisUser)]).then((results) => {
+	    	//(userEmail,from, to, type)
+	    	genpdf(req.body.recip_email, `${results[1].fname} ${results[1].lname}`,req.body.recip_name, req.body.type);
+	   		// re-render page in case user made changes
+	   		getAwards(thisUser).then((data) => {
+		        res.render('awards', {"data": data});
+		    });
+	    });
+	  }
     else {
       console.log("Error invalid");
     }
