@@ -9,7 +9,7 @@ const app = express();
 const _ = require("lodash");
 const session = require("express-session");
 const handlebars = require('express-handlebars').create({defaultLayout:'main'});
-const latex = require('node-latex');
+//const latex = require('node-latex');
 const fs = require('fs');
 const nodemailer = require('nodemailer');
 
@@ -43,7 +43,7 @@ const server = app.listen(process.env.PORT || 30444, () => {
 
 //Test line for making sure this works <-------------------------------------------
 genpdf('mcguganr@oregonstate.edu', 'CEO PERSON', 'Robert McGugan', 
-	'Award of Outstanding Performance');
+	'Award of Outstanding Performance', '11/28/2018');
 
 /* ******************* Login Functions ******************* */
 
@@ -959,7 +959,7 @@ if (session.loggedIn === 0) {
 });
 
 /* ******************* Generate PDF Certificate Functions ******************* */
-function genpdf(userEmail, from, to, type){
+function genpdf(userEmail, from, to, type, date){
 	//const input = fs.createReadStream('./emp.tex');
 	const path = './award/' + userEmail + 'out.pdf';
 	const output = fs.createWriteStream(path);
@@ -968,16 +968,19 @@ function genpdf(userEmail, from, to, type){
 		"\\usepackage{graphicx,pstricks,tikz}",
 		"\\usepackage[T1]{fontenc}",
 		"\\usepackage[margin=0in]{geometry}",
+		"\\linespread{1.3}",
 		//"\\includegraphics[width=1.0\\linewidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}",
-		"\\title{" + type + "}",
-		"\\author{" + from + "}",
-		"\\date{\\today}",
+		"\\title{" + type + "\\\\}",
+		"\\author{\\textbf{\\LARGE{CONGRATULATIONS!\\\\\\\\Awarded to " + to + "}}}",
+		"\\date{Awarded on " + date + "}",
 		"\\noindent\\begin{document}",
 		"\\noindent\\begin{tikzpicture}",
 			"\\draw (0,0) node[inner sep=0]{\\centered\\includegraphics[width=0.95\\textwidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}};",
-			"\\noindent\\draw (0,4) node[text width=30em]{\\maketitle};",
-			"\\draw (-5,-2) node{\\includegraphics[width=7cm,height=4cm]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}};",
-			"\\draw (-5, -5) node{\\large{Awarded By}};",
+			"\\noindent\\draw (0,3) node[text width=30em]{\\maketitle};",
+			//"\\write18{wget http://flip3.engr.oregonstate.edu:30444/image/jpeg;base64,/9j/4AAQSkZJ....};", //Theoretically, if you put your url here
+			//"\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{/image/jpeg;base64,/9j/4AAQSkZJ....}};", //and the name it gets once it's written, the image should show up from a url
+			"\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}};", // But idk how to test that so please try it out
+			"\\draw (0, -5) node{\\large{Awarded By: " + from + "}};",
 		"\\end{tikzpicture}",
 		/*"\\begin{picture}(100,100)",
 		"\\includegraphics[width=1.0\\linewidth,height=1.0\\linewidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}",
