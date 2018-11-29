@@ -42,7 +42,8 @@ const server = app.listen(process.env.PORT || 30444, () => {
 
 
 //Test line for making sure this works <-------------------------------------------
-genpdf('mcguganr@oregonstate.edu');
+genpdf('mcguganr@oregonstate.edu', 'CEO PERSON', 'Robert McGugan', 
+	'Award of Outstanding Performance');
 
 /* ******************* Login Functions ******************* */
 
@@ -958,23 +959,105 @@ if (session.loggedIn === 0) {
 });
 
 /* ******************* Generate PDF Certificate Functions ******************* */
-function genpdf(userEmail){
-	const input = fs.createReadStream('./emp.tex');
+function genpdf(userEmail, from, to, type){
+	//const input = fs.createReadStream('./emp.tex');
 	const path = './award/' + userEmail + 'out.pdf';
 	const output = fs.createWriteStream(path);
-	const pdf = latex(input);/*`\documentclass[12pt]{article}
-						\usepackage{graphicx}
+	//const pdf = latex(input);
+	const pdf = require("latex")(["\\documentclass[tikz, landscape]{slides}",
+		"\\usepackage{graphicx,pstricks,tikz}",
+		"\\usepackage[T1]{fontenc}",
+		//"\\includegraphics[width=1.0\\linewidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}",
+		"\\title{" + type + "}",
+		"\\author{" + from + "}",
+		"\\date{\\today}",
+		"\\noindent\\begin{document}",
+		"\\noindent\\begin{tikzpicture}",
+			"\\draw (0,0) node[inner sep=0]{\\includegraphics[width=1\\textwidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}};",
+			"\\noindent\\draw (0,2) node[text width=30em]{\\maketitle};",
+			"\\draw (5,-3) node{\\includegraphics[width=3cm,height=2cm]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}};",
+			"\\draw (0, -5) node{Where?};",
+		"\\end{tikzpicture}",
+		/*"\\begin{picture}(100,100)",
+		"\\includegraphics[width=1.0\\linewidth,height=1.0\\linewidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}",
+		"\\put(50,50){hello}",
+		//"\\put(50, 50){\\maketitle}",
+		//"\\put(30,40){includegraphics[width=0.1\\linewidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}}",
+		"\\end{picture}",*/
+		//"\\maketitle",
+		//"\\includegraphics{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}",
+		"\\end{document}"]).pipe(output);
+/*const pdf = require("latex")(["\\documentclass[16pt, landscape]{article}",
+"\\usepackage[a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}",
+"\\usepackage{pdflscape,setspace,amsmath,amssymb}",
+"\\usepackage[utf8]{inputenc}",
+"\\usepackage[T1]{fontenc}",
+"\\usepackage{tgschola}",
+"\\usepackage{graphicx}",
+"\\usepackage[normalem]{ulem}",
+"\\usepackage{charter}",
+"\\usepackage{microtype}",
+"\\hyphenpenalty 100000",
+/*"\\def\\signature#1#2{\\parbox[b]{1in}{\\smash{#1}\\vskip12pt}",
+"\\hfill \\parbox[t]{2.8in}{\\shortstack{\\vrule width 2.8in height 0.4pt\\\\small#2}}}",
+"\\def\\sigskip{\\vskip0.4in plus 0.1in}",
+        "\\def\\beginskip{\\vskip0.5875in plus 0.1in}",*/
+/*"\\begin{document}",
+"\\begin{center}",
+	"\\noindent\\makebox[\\textwidth]{\\includegraphics[width=\\paperwidth,height=\\paperheight]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back},",
+		"\\title{" + type + "},",
+		"\\author{" + from + "},",
+		"\\date{\\today},}",
+"\\end{center}",
+/*"\\begin{minipage}[c]{6.5in}",
+"{\\centering",
+	"{\\onehalfspacing",
+		"{\\LARGE\\bfseries {\\color{other}{{ Pondicherry  Engineering College}}}}\\\\%\\initfamily",
+		"\\vskip0.4em",
+		"{\\large ISTE Short Term Training Program on\\\\}",
+		"{\\Large\\bfseries{NANO ENGINEERING MATERIALS}}}\\\\",
+	"\\par}",
+"\\end{minipage}",
+"\\hfill",
+"\\begin{minipage}[l]{1.5in}",
+"\\end{minipage}",
+"\\hfill",
+"\\begin{minipage}[c]{6.5in}",
+"{\\centering",
+	"{\\onehalfspacing",
+		"{\\Large\\bfseries \\color{title}{Certificate of Participation}}\\par",
+		"\\vskip0.5em",
+		"{\\Large\\decofourleft\\quad{\\color{blue}\\decoone}\\quad\\decofourright}",
+	"\\par}}",
+"\\end{minipage}",
+"\\hfill",
+"\\begin{minipage}[r]{1.5in}",
+"\\end{minipage}",
+"\\vskip1.8em",
 
-						\title{Employee of the Month}
-						\author{Senior Advisor}
-						\date{\today}
-
-						\begin{document}
-						\maketitle
-						\includegraphics{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}
-						\end{document}`*/
-
-	pdf.pipe(output);
+"{\\doublespacing",
+"This is to certify that \\uuline{{\\large\\sffamily\\bfseries\\color{name}{\\dg. \\MakeUppercase{\\name}}}}, { \\dgn}",
+"of {\\sub}, {\\inst}, {\\place},",
+"has successfully participated in the two week  Short  Term   Training  Program",
+"on  ``\\emph{\\color{phd}{Nano   Engineering   Materials}}''   sponsored   by  ISTE  and  organized  by  Department of  Physics, Pondicherry  Engineering   College,  Puducherry,  from",
+"13$^{\\text{th}}$ December to 23$^{\\text{rd}}$ December 2010.}",
+"\\noindent",
+"{\\singlespacing",
+"\\vfil",
+"\\begin{minipage}[l]{2.8in}",
+"\\sigskip \\signature{}{Dr. Harish Kumar \\\\ Co-ordinator }",
+"\\end{minipage}",
+"\\hfill",
+"\\begin{minipage}[c]{2.8in}",
+"\\sigskip \\signature{}{Dr. Harish Kumar \\\\ Co-ordinator }",
+"\\end{minipage}",
+"\\hfill",
+"\\begin{minipage}[r]{2.8in}",
+"\\sigskip \\signature{}{Dr. Harish Kumar \\\\ Principal }",
+"\\end{minipage}} ",
+"\\pagebreak}",*/
+/*"\\end{document}"]).pipe(output);*/
+	//Watch the write stream for it to finish, then send the email to the user
 	pdf.on('error', err => console.error(err));
 	pdf.on('finish', () => emailpdf(userEmail));
 };
