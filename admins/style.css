@@ -5,6 +5,17 @@
   padding-bottom: 25px;
 }
 
+.most {
+  padding-top: 30px;
+  padding-right: 35px;
+  float: left;
+}
+
+.chart {
+  padding-left: 35px;
+  float:right;
+}
+
 <table> {
   font-family: arial, sans-serif;
   border-collapse: collapse;

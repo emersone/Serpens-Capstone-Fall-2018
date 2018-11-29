@@ -570,10 +570,14 @@ if (session.loggedIn === 0) {
 }
 
   var sql = `select u.user_id, u.email, u.password, u.fname, u.lname, u.creation_date, u.branch_id, ifNull(uac.awardCount, 0) as \`count\`
-   from users as u left join (select user_id, count(award_id) as awardCount from \`user-awards\` group by user_id) as uac on u.user_id=uac.user_id
+   from users as u left join (select ua.user_id, count(ua.award_id) as awardCount from \`user-awards\` as ua
+		left join awards as a on a.award_id=ua.award_id
+		where type="Employee of the Month"
+	group by user_id
+   ) as uac on u.user_id=uac.user_id
    left join \`user-awards\` as ua on ua.user_id=u.user_id
    left join awards as a on a.award_id=ua.award_id
-   where type="Employee of the Month"
+   where not u.isAdmin
    group by u.user_id
    order by \`count\` desc`;
 
@@ -604,13 +608,16 @@ if (session.loggedIn === 0) {
 }
 
   var sql = `select u.user_id, u.email, u.password, u.fname, u.lname, u.creation_date, u.branch_id, ifNull(uac.awardCount, 0) as \`count\`
-   from users as u left join (select user_id, count(award_id) as awardCount from \`user-awards\` group by user_id) as uac on u.user_id=uac.user_id
+   from users as u left join (select ua.user_id, count(ua.award_id) as awardCount from \`user-awards\` as ua
+		left join awards as a on a.award_id=ua.award_id
+		where type="Best Team Player"
+        group by user_id
+   ) as uac on u.user_id=uac.user_id
    left join \`user-awards\` as ua on ua.user_id=u.user_id
    left join awards as a on a.award_id=ua.award_id
-   where type="Best Team Player"
+   where not u.isAdmin
    group by u.user_id
-   order by \`count\` desc
-`;
+   order by \`count\` desc`;
 
 		mysql.pool.query(sql, function(err, rows, fields) {
 			if(err) {
@@ -776,10 +783,13 @@ if (session.loggedIn === 0) {
   var sql = `select b.region, ifNull(sum(count), 0) as number from
   branches as b left join
   (select u.user_id, u.branch_id, ifNull(uac.awardCount, 0) as \`count\`
-   from users as u left join (select user_id, count(award_id) as awardCount from \`user-awards\` group by user_id) as uac on u.user_id=uac.user_id
+   from users as u left join (select ua.user_id, count(ua.award_id) as awardCount from \`user-awards\` as ua
+      left join awards as a on a.award_id=ua.award_id
+   where a.type="Employee of the Month"
+   group by user_id) as uac on u.user_id=uac.user_id
    left join \`user-awards\` as ua on ua.user_id=u.user_id
    left join awards as a on a.award_id=ua.award_id
-   where u.isAdmin!=1 AND a.type="Employee of the Month"
+   where u.isAdmin!=1
    group by u.user_id, u.branch_id
    order by \`count\` desc) as ac
    on b.branch_id=ac.branch_id
@@ -815,10 +825,13 @@ if (session.loggedIn === 0) {
   var sql = `select b.region, ifNull(sum(count), 0) as number from
   branches as b left join
   (select u.user_id, u.branch_id, ifNull(uac.awardCount, 0) as \`count\`
-   from users as u left join (select user_id, count(award_id) as awardCount from \`user-awards\` group by user_id) as uac on u.user_id=uac.user_id
+   from users as u left join (select ua.user_id, count(ua.award_id) as awardCount from \`user-awards\` as ua
+      left join awards as a on a.award_id=ua.award_id
+   where a.type="Best Team Player"
+   group by user_id) as uac on u.user_id=uac.user_id
    left join \`user-awards\` as ua on ua.user_id=u.user_id
    left join awards as a on a.award_id=ua.award_id
-   where u.isAdmin!=1 AND a.type="Best Team Player"
+   where u.isAdmin!=1
    group by u.user_id, u.branch_id
    order by \`count\` desc) as ac
    on b.branch_id=ac.branch_id
@@ -887,10 +900,13 @@ if (session.loggedIn === 0) {
   var sql = `select b.branch_id, b.name, b.city, b.state, b.region, ifNull(sum(count), 0) as number from
   branches as b left join
   (select u.user_id, u.branch_id, ifNull(uac.awardCount, 0) as \`count\`
-   from users as u left join (select user_id, count(award_id) as awardCount from \`user-awards\` group by user_id) as uac on u.user_id=uac.user_id
+   from users as u left join (select ua.user_id, count(ua.award_id) as awardCount from \`user-awards\` as ua
+      left join awards as a on a.award_id=ua.award_id
+	  where a.type="Employee of the Month"
+   group by user_id) as uac on u.user_id=uac.user_id
    left join \`user-awards\` as ua on ua.user_id=u.user_id
    left join awards as a on a.award_id=ua.award_id
-   where u.isAdmin!=1 AND a.type="Employee of the Month"
+   where u.isAdmin!=1
    group by u.user_id, u.branch_id
    order by \`count\` desc) as ac
    on b.branch_id=ac.branch_id
@@ -925,10 +941,13 @@ if (session.loggedIn === 0) {
   var sql = `select b.branch_id, b.name, b.city, b.state, b.region, ifNull(sum(count), 0) as number from
   branches as b left join
   (select u.user_id, u.branch_id, ifNull(uac.awardCount, 0) as \`count\`
-   from users as u left join (select user_id, count(award_id) as awardCount from \`user-awards\` group by user_id) as uac on u.user_id=uac.user_id
+   from users as u left join (select ua.user_id, count(ua.award_id) as awardCount from \`user-awards\` as ua
+      left join awards as a on a.award_id=ua.award_id
+	  where a.type="Best Team Player"
+      group by user_id) as uac on u.user_id=uac.user_id
    left join \`user-awards\` as ua on ua.user_id=u.user_id
    left join awards as a on a.award_id=ua.award_id
-   where u.isAdmin!=1 AND a.type="Best Team Player"
+   where u.isAdmin!=1
    group by u.user_id, u.branch_id
    order by \`count\` desc) as ac
    on b.branch_id=ac.branch_id
