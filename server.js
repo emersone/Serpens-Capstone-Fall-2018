@@ -9,6 +9,9 @@ const app = express();
 const _ = require("lodash");
 const session = require("express-session");
 const handlebars = require('express-handlebars').create({defaultLayout:'main'});
+//const latex = require('node-latex');
+const fs = require('fs');
+const nodemailer = require('nodemailer');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -29,7 +32,7 @@ app.set('mysql', mysql);
 
 
 /* ******************* Start Server ******************* */
-const server = app.listen(process.env.PORT || 8080, () => {
+const server = app.listen(process.env.PORT || 6863, () => {
   const port = server.address().port;
   console.log(`App listening on port ${port}`);
 });
@@ -113,14 +116,15 @@ const getProfile = (user_id) => {
 };
 
 const getSignature = (sig_id) => {
-  var SQL = "SELECT * FROM users.signatures WHERE sig_id = " + sig_id;
+  console.log(sig_id);
+  var SQL = "SELECT * FROM users.signatures WHERE sig_id = " + parseInt(sig_id,10);
   return new Promise((resolve, reject) => {
     mysql.pool.query(SQL, (error, results) => {
       if (error) {
         console.log(error);
         reject(error);
       }
-      resolve(results);
+      resolve(results[0]);
     });
   })
   .catch(() => null);
@@ -387,8 +391,9 @@ app.post("/awards", (req, res) => {
     else if (Object.keys(req.body).indexOf("email") > -1) {
 	  	// update in case user made changes
 	    Promise.all([updateAward(req.body, thisUser), getProfile(thisUser)]).then((results) => {
-        getSignature(results[1].sig_id).then((imageData) => {
-          genpdf(req.body.recip_email, `${results[1].fname} ${results[1].lname}`,req.body.recip_name, req.body.type, imageData.sig);
+        getSignature(results[1][0].sig_id).then((imageData) => {
+          // genpdf(userEmail, from, to, type, date, image)
+          genpdf(req.body.recip_email, `${results[1][0].fname} ${results[1][0].lname}`,req.body.recip_name, req.body.type, req.body.date_given, (imageData.sig).slice(5));
           // re-render page in case user made changes
           getAwards(thisUser).then((data) => {
             res.render('awards', {
@@ -1185,7 +1190,11 @@ if (session.loggedIn === 0 || !session.admin) {
 });
 
 /* ******************* Generate PDF Certificate Functions ******************* */
-function genpdf(userEmail, from, to, type, date, image){
+function genpdf(userEmail, from, to, type, dateTime, image){
+  const date = date.slice(0, 10);
+  // console.log(`\\write18{wget http://flip3.engr.oregonstate.edu:6863/${image}};`);
+  // console.log(`\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{${image}}};`)
+
 	//const input = fs.createReadStream('./emp.tex');
 	const path = './award/' + userEmail + 'out.pdf';
 	const output = fs.createWriteStream(path);
@@ -1201,11 +1210,11 @@ function genpdf(userEmail, from, to, type, date, image){
 		"\\date{Awarded on " + date + "}",
 		"\\noindent\\begin{document}",
 		"\\noindent\\begin{tikzpicture}",
-			"\\draw (0,0) node[inner sep=0]{\\centered\\includegraphics[width=0.95\\textwidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}};",
+			"\\draw (0,0) node[inner sep=0]{\\centered\\includegraphics[width=0.95\\textwidth]{/nfs/stak/users/holderms/Serpens-Capstone-Fall-2018/award/back}};",
 			"\\noindent\\draw (0,3) node[text width=30em]{\\maketitle};",
-			`\\write18{wget http://flip3.engr.oregonstate.edu:30444/${image}};`, //Theoretically, if you put your url here
+			`\\write18{wget http://flip3.engr.oregonstate.edu:6863/${image}};`, //Theoretically, if you put your url here
 			`\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{${image}}};`, //and the name it gets once it's written, the image should show up from a url
-			"\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}};", // But idk how to test that so please try it out
+			// "\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}};", // But idk how to test that so please try it out
 			"\\draw (0, -5) node{\\large{Awarded By: " + from + "}};",
 		"\\end{tikzpicture}",
 		/*"\\begin{picture}(100,100)",

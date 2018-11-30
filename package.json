@@ -64,7 +64,9 @@
 		"mysql": "^2.16.0",
 		"pop": "latest",
 		"request": "^2.88.0",
-		"session": "^0.1.0"
+		"session": "^0.1.0",
+		"nodemailer": "latest",
+		"latex": "latest",
 	},
 	"devDependencies": {
 		"@google-cloud/nodejs-repo-tools": "2.2.1",
@@ -73,5 +75,5 @@
 	},
 	"engines": {
 		"node": "8.x.x"
-	},
+	}
 }
