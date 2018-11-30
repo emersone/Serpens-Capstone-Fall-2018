@@ -1,14 +1,13 @@
-<p><a href="/profile">Manage your profile</a></p>
 <h1>Your Award History</h1>
 <span id="sig_id" value="{{sig_id}}"></span>
-<table style="width: 90%">
+<table style="margin: auto; width: 70%">
     <colgroup>
        <col span="1" style="width: 5%;">
        <col span="1" style="width: 18%;">
        <col span="1" style="width: 19%;">
        <col span="1" style="width: 20%;">
-       <col span="1" style="width: 23%;">
-       <col span="1" style="width: 15%;">
+       <col span="1" style="width: 20%;">
+       <col span="1" style="width: 18%;">
     </colgroup>
 	<col width="10">
     <thead>
@@ -29,7 +28,7 @@
 	    		</select>
 	    	</td>
 	        <td><input type="text" id="recip_name" name="recip_name"></td>
-	        <td><input type="text" id="recip_email" name="recip_email"></td>
+	        <td><input type="text" id="recip_email" name="recip_email" size="30"></td>
 	        <td><input type="datetime-local" id="date_given"
 		       name="date_given" min="2013-01-01T00:00" max="2022-01-01T00:00">
 	        </td>
@@ -50,7 +49,7 @@
 	    		</select>
 	    	</td>
 	        <td><input type="text" id="recip_name" name="recip_name" value="{{recip_name}}"></td>
-	        <td><input type="text" id="recip_email" name="recip_email" value="{{recip_email}}"></td>
+	        <td><input type="text" id="recip_email" name="recip_email" value="{{recip_email}}" size="30"></td>
 	        <td><input type="datetime-local" id="date_given"
 		       name="date_given" value="{{date_given}}"
 		       min="2013-01-01T00:00" max="2022-01-01T00:00">
