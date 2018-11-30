@@ -1,5 +1,5 @@
 //const URL = "https://serpens-cs467.appspot.com/";
-const URL = "http://localhost:8080";
+//const URL = "http://localhost:8080";
 
 var app = new Vue({
   el: '#app',
@@ -96,7 +96,7 @@ var app = new Vue({
       }
 
       //Opens a new async GET request to update the mySQL table
-      fetch(URL + "/API/admins/" + adminId, {
+      fetch("/API/admins/" + adminId, {
         method: 'PUT',
         body: JSON.stringify(obj),
         headers:{

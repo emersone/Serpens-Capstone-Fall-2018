@@ -37,13 +37,13 @@
 <h2>Administrators</h2>
   <table>
       <tr>
-		<th>Admin Id</th>
+		<th>Admin ID</th>
         <th>Email</th>
         <th>First Name</th>
         <th>Last Name</th>
         <th>Creation Date</th>
         <th>Branch</th>
-        <th>Signature</th>
+        <th>Signature ID</th>
         <th>Edit</th>
         <th>Delete</th>
       </tr>
@@ -75,9 +75,9 @@
         <label>First Name: <input placeholder="fname" v-bind:id="'fname'" type = "text" value = ""></input></label><br>
         <label>Last Name: <input placeholder="lname" v-bind:id="'lname'" type = "text" value = ""></input></label><br>
         <label>Password: <input placeholder="password" v-bind:id="'password'" type = "text" value = ""></input></label><br>
-        <label>Creation Date: <input placeholder="creation_date" v-bind:id="'creation_date'" type = "text" value = ""></input></label><br>
-        <label>Branch ID: <input placeholder="branch_id" v-bind:id="'branch_id'" type = "text" value = ""></input></label><br>
-        <label>Signature ID: <input placeholder="sig_id" v-bind:id="'sig_id'" type = "text" value = ""></input></label><br><br>
+        <label>Creation Date: <input placeholder="0000-00-00 00:00:00" v-bind:id="'creation_date'" type = "text" value = "">     ex: 2017-04-25 10:35:00</input></label><br>
+        <label>Branch ID: <input placeholder="branch_id" v-bind:id="'branch_id'" type = "text" value = ""></input>     options: 1, 2, 3, 4, or 5</label><br>
+        <label>Signature ID: <input placeholder="sig_id" v-bind:id="'sig_id'" type = "text" value = "">(leave blank)</input></label><br><br>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-default" data-dismiss="modal" v-on:click="addAdmin">Submit</button>
@@ -92,13 +92,13 @@
 
   <table>
       <tr>
-		<th>User Id</th>
+		<th>User ID</th>
         <th>Email</th>
         <th>First Name</th>
         <th>Last Name</th>
         <th>Creation Date</th>
         <th>Branch</th>
-        <th>Signature</th>
+        <th>Signature ID</th>
         <th>Edit</th>
         <th>Delete</th>
       </tr>
@@ -130,8 +130,8 @@
         <label>First Name: <input placeholder="fname" v-bind:id="'user_fname'" type = "text" value = ""></input></label><br>
         <label>Last Name: <input placeholder="lname" v-bind:id="'user_lname'" type = "text" value = ""></input></label><br>
         <label>Password: <input placeholder="password" v-bind:id="'user_password'" type = "text" value = ""></input></label><br>
-        <label>Creation Date: <input placeholder="creation_date" v-bind:id="'user_creation_date'" type = "text" value = ""></input></label><br>
-        <label>Branch ID: <input placeholder="branch_id" v-bind:id="'user_branch_id'" type = "text" value = ""></input></label><br>
+        <label>Creation Date: <input placeholder="0000-00-00 00:00:00" v-bind:id="'user_creation_date'" type = "text" value = "">     ex: 2017-04-25 10:35:00</input></label><br>
+        <label>Branch ID: <input placeholder="branch_id" v-bind:id="'user_branch_id'" type = "text" value = ""></input>      options: 1, 2, 3, 4, or 5</label><br>
         <label>Signature ID: <input placeholder="sig_id" v-bind:id="'user_sig_id'" type = "text" value = ""></input></label><br><br>
       </div>
       <div class="modal-footer">

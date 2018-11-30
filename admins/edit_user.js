@@ -1,5 +1,5 @@
 //const URL = "https://serpens-cs467.appspot.com/";
-const URL = "http://localhost:8080";
+// const URL = "http://localhost:8080";
 
 var app = new Vue({
   el: '#app',
@@ -9,8 +9,7 @@ var app = new Vue({
      fname: "",
      lname: "",
      creation_date: "",
-     branch_id: "",
-     sig_id: ""
+     branch_id: ""
   },
   created() {
     //Arguments sent in through the URL
@@ -74,7 +73,6 @@ var app = new Vue({
     this.lname = unescape(params.lname);
     this.creation_date = creation_date;
     this.branch_id = unescape(params.branch_id);
-    this.sig_id = unescape(params.sig_id);
     this.params = params;
   },
   methods: {
@@ -87,7 +85,6 @@ var app = new Vue({
       var password = document.getElementById("password").value;
       var creation_date = document.getElementById("creation_date").value;
       var branch_id = document.getElementById("branch_id").value;
-      var sig_id = document.getElementById("sig_id").value;
 
       var obj = {
         "email": email,
@@ -96,11 +93,10 @@ var app = new Vue({
         "lname": lname,
         "creation_date": creation_date,
         "branch_id": branch_id,
-        "sig_id": sig_id
       }
 
       //Opens a new async GET request to update the mySQL table
-      fetch(URL + "/API/users/" + userId, {
+      fetch("/API/users/" + userId, {
         method: 'PUT',
         body: JSON.stringify(obj),
         headers:{

@@ -2,7 +2,7 @@
 //shows functionality of administrators table
 
 //const URL = "https://serpens-cs467.appspot.com/";
-const URL = "http://localhost:8080";
+//const URL = "http://localhost:8080";
 
 var app = new Vue({
   el: '#app',
@@ -23,7 +23,7 @@ var app = new Vue({
     },
     refreshAdmins: function() {
       var vm = this;
-      fetch(URL + "/API/admins")
+      fetch("/API/admins")
   		.then(function(response) {
   			return response.json();
   		})
@@ -31,6 +31,7 @@ var app = new Vue({
         console.log(json)
         vm.clearAdmins();
         for(i in json) {
+          json[i].creation_date = moment(unescape(json[i].creation_date), ["YYYY-MM-DDTHH:mm:ssZ","YYYY-MM-DD HH:mm:ss"]).format("YYYY-MM-DD HH:mm:ss").toString();
           vm.admins.push(json[i]);
         }
   		})
@@ -56,10 +57,10 @@ var app = new Vue({
         "creation_date": creation_date,
         "isAdmin": 1,
         "branch_id": branch_id,
-        "sig_id": sig_id,
+        "sig_id": sig_id
       }
 
-      fetch(URL + "/API/admins", {
+      fetch("/API/admins", {
         method: 'POST', // or 'PUT'
         body: JSON.stringify(obj), // data can be `string` or {object}!
         headers:{
@@ -72,7 +73,7 @@ var app = new Vue({
     deleteAdmin: function(event) {
       var vm1 = this;
       var adminId = event.toElement.parentNode.parentNode.firstChild.innerHTML
-      fetch(URL + "/API/admins/" + adminId, {
+      fetch("/API/admins/" + adminId, {
         method: 'DELETE',    })
         .then(response => vm1.refreshAdmins())
         .catch(error => console.error('Error:', error));
@@ -105,7 +106,7 @@ var app = new Vue({
       },
     refreshUsers: function() {
         var vm = this;
-        fetch(URL + "/API/users")
+        fetch("/API/users")
     		.then(function(response) {
     			return response.json();
     		})
@@ -113,6 +114,7 @@ var app = new Vue({
           console.log(json)
           vm.clearUsers();
           for(i in json) {
+            json[i].creation_date = moment(unescape(json[i].creation_date), ["YYYY-MM-DDTHH:mm:ssZ","YYYY-MM-DD HH:mm:ss"]).format("YYYY-MM-DD HH:mm:ss").toString();
             vm.users.push(json[i]);
           }
     		})
@@ -138,12 +140,12 @@ var app = new Vue({
         "creation_date": creation_date,
         "isAdmin": 0,
         "branch_id": branch_id,
-        "sig_id": sig_id,
+        "sig_id": sig_id
       }
 
       console.log(obj)
 
-      fetch(URL + "/API/users", {
+      fetch("/API/users", {
         method: 'POST', // or 'PUT'
         body: JSON.stringify(obj), // data can be `string` or {object}!
         headers:{
@@ -156,7 +158,7 @@ var app = new Vue({
       deleteUser: function(event) {
         var vm = this;
         var userId = event.toElement.parentNode.parentNode.firstChild.innerHTML
-        fetch(URL + "/API/users/" + userId, {
+        fetch("/API/users/" + userId, {
           method: 'DELETE',    })
           .then(response => vm.refreshUsers())
           .catch(error => console.error('Error:', error));

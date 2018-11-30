@@ -16,7 +16,7 @@ app.use(session({
   secret: "thisisapassword1",
   resave: false,
   saveUninitialized: false
-          }));
+}));
 session.loggedIn = 0;
 
 /* ******************* Frontend Pages ******************* */
@@ -33,8 +33,8 @@ app.set('mysql', mysql);
 
 /* ******************* Start Server ******************* */
 const server = app.listen(process.env.PORT || 8080, () => {
-	const port = server.address().port;
-	console.log(`App listening on port ${port}`);
+  const port = server.address().port;
+  console.log(`App listening on port ${port}`);
 });
 
 
@@ -42,9 +42,9 @@ const server = app.listen(process.env.PORT || 8080, () => {
 
 //display login page
 app.get('/', function(req, res) {
-    console.log("in login.js get");
-    var context = {};
-    res.render('login', context);
+  console.log("in login.js get");
+  var context = {};
+  res.render('login', context);
 });
 
 app.get("/logOut", function(req, res){
@@ -91,6 +91,178 @@ app.post('/', (req, res) => {
 });
 
 /* ******************* User Page Functions ***************** */
+
+/* ******************* User Acccount Functions ************ */
+
+const getProfile = (user_id) => {
+  var SQL = "SELECT fname, lname, sig_id FROM users.users WHERE user_id = " + user_id;;
+  return new Promise((resolve, reject) => {
+    mysql.pool.query(SQL, (error, results) => {
+      if (error) {
+        reject(error);
+      }
+      resolve(results);
+    });
+  })
+  .catch(() => null);
+};
+
+const getSignature = (sig_id) => {
+  var SQL = "SELECT * FROM users.signatures WHERE sig_id = " + sig_id;
+  return new Promise((resolve, reject) => {
+    mysql.pool.query(SQL, (error, results) => {
+      if (error) {
+        console.log(error);
+        reject(error);
+      }
+      resolve(results);
+    });
+  })
+  .catch(() => null);
+};
+
+const updateProfile = (data, user_id) => {
+  var SQL = "UPDATE users.users SET fname=?, lname=?, sig_id=? WHERE user_id=?";
+  var inserts = [data.fname, data.lname, parseInt(data.sig_id, 10), user_id];
+  return new Promise((resolve, reject) => {
+    mysql.pool.query(SQL, inserts, (error, results) => {
+      if (!_.isEmpty(results)) {
+        resolve({});
+      }
+      reject(error);
+    });
+  })
+  .catch(() => null);
+};
+
+const updateSignature = (data, sig_id) => {
+  //  console.log("Update signature");
+  var SQL = "UPDATE users.signatures SET sig=?, sig_name=? WHERE sig_id=?";
+  var inserts = [data.sig, data.sig_name, parseInt(sig_id, 10)];
+  return new Promise((resolve, reject) => {
+    mysql.pool.query(SQL, inserts, (error, results) => {
+      if (!_.isEmpty(results)) {
+        //      	console.log(results);
+        resolve({});
+      }
+      //      console.log(error);
+      reject(error);
+    });
+  })
+  .catch(() => null);
+};
+
+const addSignature = (data) => {
+  var SQL = "INSERT INTO signatures (sig, sig_name) VALUES (?, ?)";
+  var inserts = [data.sig, data.sig_name];
+  return new Promise((resolve, reject) => {
+    mysql.pool.query(SQL, inserts, (error, results) => {
+      if (!_.isEmpty(results)) {
+        resolve({insertId: results.insertId});
+      }
+      console.log(error);
+      reject(error);
+    });
+  })
+  .catch(() => null);
+};
+
+app.get("/profile", (req, res) => {
+  if (session.loggedIn !== 0) {
+    getProfile(session.loggedIn).then((data) => {
+      const pageData = {
+        fname: data[0].fname,
+        lname: data[0].lname,
+        sig_id: data[0].sig_id === null ? 0 : data[0].sig_id
+      };
+      if (data[0].sig_id === null) {
+        res.render("profile", pageData);
+      }
+      else {
+        getSignature(data[0].sig_id).then((sigData) => {
+          pageData.sig_name = sigData[0].sig_name === "None selected" ? null : sigData[0].sig_name
+          res.render("profile", pageData);
+        });
+      }
+    });
+  }
+  else {
+    res.render('notLoggedIn', {});
+  }
+});
+
+app.post("/profile", (req, res) => {
+  // handle file https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications
+  if (session.loggedIn !== 0) {
+    // New sig not provided
+    var form = new formidable.IncomingForm();
+    form.parse(req, (err, fields, files) => {
+      if (files.sig.size === 0) {
+        console.log("No file update");
+        updateProfile(fields, session.loggedIn).then(() => {
+          getProfile(session.loggedIn).then((data) => {
+            res.render("profile", data[0]);
+          });
+        });
+      }
+      // signature has been added or updated
+      else {
+        const reader = new FileReader();
+        let imgURL;
+        reader.onload = function () {
+          imgURL = reader.result;
+          if (parseInt(fields.sig_id, 10) !== 0) {
+            const sigData = {
+              sig_name: files.sig.name,
+              sig: imgURL
+            };
+            Promise.all([updateProfile(fields, session.loggedIn), updateSignature(sigData, fields.sig_id)])
+            .then(() => {
+              getProfile(session.loggedIn).then((data) => {
+                res.render("profile", data[0]);
+              });
+            });
+          }
+          // is a new signature
+          else {
+            console.log("new Signature");
+            const sigData = {
+              sig_name: files.sig.name,
+              sig: imgURL
+            };
+            addSignature(sigData)
+            .then((data) => {
+              const profileData = {
+                fname: fields.fname,
+                lname: fields.lname,
+                sig_id: data.insertId,
+              };
+              updateProfile(profileData, session.loggedIn).then(() => {
+                getProfile(session.loggedIn).then((data) => {
+                  res.render("profile", data[0]);
+                });
+              });
+            });
+          }
+        };
+        reader.readAsDataURL(files.sig);
+      }
+    });
+  }
+  else {
+    res.render('notLoggedIn', {});
+  }
+});
+
+// for test purposes to fetch and display a signature in the browser
+app.get("/signature", (req, res) => {
+  getSignature("5").then((data) => {
+    console.log(data[0].sig);
+    res.render('testSignature', {data: data[0].sig});
+  });
+});
+
+/* ******************* Awards Functions ***************** */
 const getAwards = (user_id) => {
   var SQL = "SELECT * FROM users.awards WHERE creator_user_id = " + user_id;
   //  	var inserts = [user_id];
@@ -102,9 +274,9 @@ const getAwards = (user_id) => {
         reject(error);
       }
       resolve(results.map((entry) => {
-	      entry.date_given = entry.date_given.toISOString().slice(0,16);
-	      return entry;
-	    }));
+        entry.date_given = entry.date_given.toISOString().slice(0,16);
+        return entry;
+      }));
     });
   })
   .catch(() => null);
@@ -113,15 +285,15 @@ const getAwards = (user_id) => {
 const newAward = (data, user_id) => {
   var SQL = "INSERT INTO awards (creator_user_id, type, recip_name, recip_email, date_given) VALUES (?, ?, ?, ?, ?)";
   var inserts = [user_id, data.type, data.recip_name, data.recip_email, data.date_given];
-	return new Promise((resolve, reject) => {
-		mysql.pool.query(SQL, inserts, (error, results) => {
-	      if (!_.isEmpty(results)) {
-	      	resolve({});
-	      }
-	      reject(error);
-    	});
-	})
-	.catch(() => null);
+  return new Promise((resolve, reject) => {
+    mysql.pool.query(SQL, inserts, (error, results) => {
+      if (!_.isEmpty(results)) {
+        resolve({});
+      }
+      reject(error);
+    });
+  })
+  .catch(() => null);
 };
 
 const deleteAward = (award_id, user_id) => {
@@ -142,7 +314,7 @@ const deleteAward = (award_id, user_id) => {
 const updateAward = (data, user_id) => {
   var SQL = "UPDATE users.awards SET type=?, recip_name=?, recip_email=?, date_given=? WHERE award_id=? AND creator_user_id=?";
   var inserts = [data.type, data.recip_name, data.recip_email, data.date_given, parseInt(data.award_id, 10), user_id];
-//  console.log(inserts);
+  //  console.log(inserts);
   return new Promise((resolve, reject) => {
     mysql.pool.query(SQL, inserts, (error, results) => {
       if (!_.isEmpty(results)) {
@@ -155,44 +327,65 @@ const updateAward = (data, user_id) => {
 };
 
 app.get("/awards", (req, res) => {
-  const thisUser = session.loggedIn;
-  getAwards(thisUser).then((data) => {
-    res.render('awards', {"data": data});
-  });
-
+  if (session.loggedIn !== 0) {
+    const thisUser = session.loggedIn;
+    getAwards(thisUser).then((data) => {
+      res.render('awards', {"data": data});
+    });
+  }
+  else {
+    res.render('notLoggedIn', {});
+  }
 });
 
 app.post("/awards", (req, res) => {
   //	console.log(req.body);
-  const thisUser = session.loggedIn;
-  if (Object.keys(req.body).indexOf("delete") > -1) {
-    deleteAward(req.body.award_id, thisUser).then(() => {
-      getAwards(thisUser).then((data) => {
-        res.render('awards', {"data": data});
+  if (session.loggedIn !== 0) {
+    const thisUser = session.loggedIn;
+    if (Object.keys(req.body).indexOf("delete") > -1) {
+      deleteAward(req.body.award_id, thisUser).then(() => {
+        getAwards(thisUser).then((data) => {
+          res.render('awards', {"data": data});
+        });
       });
-    });
-  }
-  else if (Object.keys(req.body).indexOf("update") > -1) {
-    console.log("In update");
-    updateAward(req.body, thisUser).then(() => {
-      getAwards(thisUser).then((data) => {
-        res.render('awards', {"data": data});
+    }
+    else if (Object.keys(req.body).indexOf("update") > -1) {
+      console.log("In update");
+      updateAward(req.body, thisUser).then(() => {
+        getAwards(thisUser).then((data) => {
+          res.render('awards', {"data": data});
+        });
       });
-    });
-  }
-  else if (Object.keys(req.body).indexOf("add") > -1) {
-    console.log("In add");
+    }
+    else if (Object.keys(req.body).indexOf("add") > -1) {
+      console.log("In add");
       newAward(req.body, thisUser).then(() => {
-      getAwards(thisUser).then((data) => {
-        res.render('awards', {"data": data});
+        getAwards(thisUser).then((data) => {
+          res.render('awards', {"data": data});
+        });
       });
-    });
+    }
+    else if (Object.keys(req.body).indexOf("email") > -1) {
+	  	console.log("In email");
+	  	// update in case user made changes
+	    Promise.all([updateAward(req.body, thisUser), getProfile(thisUser)]).then((results) => {
+	    	//(userEmail,from, to, type)
+	    	genpdf(req.body.recip_email, `${results[1].fname} ${results[1].lname}`,req.body.recip_name, req.body.type);
+	   		// re-render page in case user made changes
+	   		getAwards(thisUser).then((data) => {
+		        res.render('awards', {"data": data});
+		    });
+	    });
+	  }
+    else {
+      console.log("Error invalid");
+    }
   }
   else {
-    console.log("Error invalid");
+    res.render('notLoggedIn', {});
   }
-});
 
+});
 /* ******************* Backend Functions ******************* */
 
 /*------------- Create an admin -------------*/
@@ -258,18 +451,18 @@ app.post('/API/admins', (req, res) => {
   }
 
   //Check that sig_id field exists in request
-  if(req.body.sig_id === null ||
-     req.body.sig_id === undefined ||
-     req.body.sig_id === "") {
-    res.status(400).send('Error: signature not found');
-    return;
-  }
+  // if(req.body.sig_id === null ||
+  //    req.body.sig_id === undefined ||
+  //    req.body.sig_id === "") {
+  //   res.status(400).send('Error: signature not found');
+  //   return;
+  // }
 
 	//Create variables to prepare data for insertion into table
-	var sql = 'INSERT INTO users (email, password, fname, lname, creation_date, isAdmin, branch_id, sig_id) VALUES (?,?,?,?,?,?,?,?)';
+	var sql = 'INSERT INTO users (email, password, fname, lname, creation_date, isAdmin, branch_id) VALUES (?,?,?,?,?,?,?)';
 	var record = [req.body.email, req.body.password, req.body.fname,
                 req.body.lname, req.body.creation_date, req.body.isAdmin,
-                req.body.branch_id, req.body.sig_id];
+                req.body.branch_id];
 
 	//Insert row into users table
 	mysql.pool.query(sql, record, function(err, result) {
@@ -473,19 +666,19 @@ app.post('/API/users', (req, res) => {
     return;
   }
 
-  //Check that sig_id field exists in request
-  if(req.body.sig_id === null ||
-     req.body.sig_id === undefined ||
-     req.body.sig_id === "") {
-    res.status(400).send('Error: signature not found');
-    return;
-  }
+  // //Check that sig_id field exists in request
+  // if(req.body.sig_id === null ||
+  //    req.body.sig_id === undefined ||
+  //    req.body.sig_id === "") {
+  //   res.status(400).send('Error: signature not found');
+  //   return;
+  // }
 
   //Create variables to prepare data for insertion into table
-	var sql = 'INSERT INTO users (email, password, fname, lname, creation_date, isAdmin, branch_id, sig_id) VALUES (?,?,?,?,?,?,?,?)';
+	var sql = 'INSERT INTO users (email, password, fname, lname, creation_date, isAdmin, branch_id) VALUES (?,?,?,?,?,?,?)';
 	var record = [req.body.email, req.body.password, req.body.fname,
                 req.body.lname, req.body.creation_date, req.body.isAdmin,
-                req.body.branch_id, req.body.sig_id];
+                req.body.branch_id];
 
   //Insert row into users table
   mysql.pool.query(sql, record, function(err, result) {
