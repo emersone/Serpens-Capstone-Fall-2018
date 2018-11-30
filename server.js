@@ -1191,7 +1191,9 @@ if (session.loggedIn === 0 || !session.admin) {
 
 /* ******************* Generate PDF Certificate Functions ******************* */
 function genpdf(userEmail, from, to, type, dateTime, image){
-  const date = date.slice(0, 10);
+  const options = { year: 'numeric', month: 'long', day: 'numeric' };
+  let date = new Date(dateTime);
+  date = date.toLocaleDateString('en-US', options);
   // console.log(`\\write18{wget http://flip3.engr.oregonstate.edu:6863/${image}};`);
   // console.log(`\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{${image}}};`)
 
