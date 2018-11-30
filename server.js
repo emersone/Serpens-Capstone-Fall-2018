@@ -505,7 +505,7 @@ app.post('/API/admins', (req, res) => {
 app.get('/API/admins', (req, res) => {
   console.log("GET /API/admins");
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -529,7 +529,7 @@ app.get('/API/admins', (req, res) => {
 app.get('/API/admins/:admin_id', (req, res) => {
   console.log("GET /API/admins/:admin_id");
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -556,7 +556,7 @@ app.get('/API/admins/:admin_id', (req, res) => {
 app.put('/API/admins/:admin_id', (req, res) => {
   console.log("PUT /API/admins/:admin_id");
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -598,7 +598,7 @@ app.put('/API/admins/:admin_id', (req, res) => {
 app.delete('/API/admins/:admin_id', (req, res) => {
   console.log("DELETE /API/admins/:admin_id");
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -625,7 +625,7 @@ app.delete('/API/admins/:admin_id', (req, res) => {
 app.post('/API/users', (req, res) => {
   console.log("POST /API/users")
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -721,7 +721,7 @@ app.post('/API/users', (req, res) => {
 app.get('/API/users', (req, res) => {
   console.log("GET /API/users")
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -745,7 +745,7 @@ app.get('/API/users', (req, res) => {
 app.get('/API/users/mostawards', function(req, res, next) {
 console.log("GET /API/users/mostawards")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -779,7 +779,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/eotm', function(req, res, next) {
 console.log("GET /API/users/mostawards/eotm")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -817,7 +817,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/btp', function(req, res, next) {
 console.log("GET /API/users/mostawards/btp")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -855,7 +855,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/:user_id', (req, res) => {
   console.log("GET /API/users/:user_id")
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -882,7 +882,7 @@ app.get('/API/users/:user_id', (req, res) => {
 app.put('/API/users/:user_id', (req, res) => {
   console.log("PUT /API/users/:user_id")
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -923,7 +923,7 @@ app.put('/API/users/:user_id', (req, res) => {
 app.delete('/API/users/:user_id', (req, res) => {
   console.log("DELETE /API/users/:user_id")
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -951,7 +951,7 @@ app.delete('/API/users/:user_id', (req, res) => {
 app.get('/API/users/mostawards/region', function(req, res, next) {
 console.log("GET /API/users/mostawards/region")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -990,7 +990,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/region/eotm', function(req, res, next) {
 console.log("GET /API/users/mostawards/region/eotm")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -1032,7 +1032,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/region/btp', function(req, res, next) {
 console.log("GET /API/users/mostawards/region/btp")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -1074,7 +1074,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/branch', function(req, res, next) {
 console.log("GET /API/users/mostawards/branch")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -1107,7 +1107,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/branch/eotm', function(req, res, next) {
 console.log("GET /API/users/mostawards/branch/eotm")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -1148,7 +1148,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/branch/btp', function(req, res, next) {
 console.log("GET /API/users/mostawards/branch/btp")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
