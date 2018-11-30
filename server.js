@@ -116,7 +116,7 @@ const getProfile = (user_id) => {
 };
 
 const getSignature = (sig_id) => {
-  console.log(sig_id);
+  // console.log(sig_id);
   var SQL = "SELECT * FROM users.signatures WHERE sig_id = " + parseInt(sig_id,10);
   return new Promise((resolve, reject) => {
     mysql.pool.query(SQL, (error, results) => {
@@ -189,7 +189,7 @@ app.get("/profile", (req, res) => {
       }
       else {
         getSignature(data[0].sig_id).then((sigData) => {
-          pageData.sig_name = sigData[0].sig_name;
+          pageData.sig_name = sigData.sig_name;
           res.render("profile", pageData);
         });
       }
@@ -276,8 +276,9 @@ app.post("/profile", (req, res) => {
 
 // for test purposes to fetch and display a signature in the browser
 app.get("/signature", (req, res) => {
-  getSignature("5").then((data) => {
-    res.render('testSignature', {data: data[0].sig});
+  console.log(req.query);
+  getSignature(req.query.id).then((data) => {
+    res.render('testSignature', {data: data.sig});
   });
 });
 
@@ -393,7 +394,9 @@ app.post("/awards", (req, res) => {
 	    Promise.all([updateAward(req.body, thisUser), getProfile(thisUser)]).then((results) => {
         getSignature(results[1][0].sig_id).then((imageData) => {
           // genpdf(userEmail, from, to, type, date, image)
-          genpdf(req.body.recip_email, `${results[1][0].fname} ${results[1][0].lname}`,req.body.recip_name, req.body.type, req.body.date_given, (imageData.sig).slice(5));
+          // const sig = (imageData.sig).slice(5);
+          const sig = (imageData.sig);
+          genpdf(req.body.recip_email, `${results[1][0].fname} ${results[1][0].lname}`,req.body.recip_name, req.body.type, req.body.date_given, sig, imageData.sig_name);
           // re-render page in case user made changes
           getAwards(thisUser).then((data) => {
             res.render('awards', {
@@ -411,7 +414,6 @@ app.post("/awards", (req, res) => {
   else {
     res.render('notLoggedIn', {});
   }
-
 });
 /* ******************* Backend Functions ******************* */
 
