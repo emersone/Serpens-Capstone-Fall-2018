@@ -9,8 +9,6 @@ const app = express();
 const _ = require("lodash");
 const session = require("express-session");
 const handlebars = require('express-handlebars').create({defaultLayout:'main'});
-const fs = require('fs');
-const nodemailer = require('nodemailer');
 
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json());
@@ -34,15 +32,11 @@ app.set('mysql', mysql);
 
 
 /* ******************* Start Server ******************* */
-const server = app.listen(process.env.PORT || 30444, () => {
+const server = app.listen(process.env.PORT || 8080, () => {
   const port = server.address().port;
   console.log(`App listening on port ${port}`);
 });
 
-
-//Test line for making sure this works <-------------------------------------------
-genpdf('mcguganr@oregonstate.edu', 'CEO PERSON', 'Robert McGugan', 
-	'Award of Outstanding Performance', '11/28/2018');
 
 /* ******************* Login Functions ******************* */
 
@@ -457,18 +451,18 @@ app.post('/API/admins', (req, res) => {
   }
 
   //Check that sig_id field exists in request
-  if(req.body.sig_id === null ||
-     req.body.sig_id === undefined ||
-     req.body.sig_id === "") {
-    res.status(400).send('Error: signature not found');
-    return;
-  }
+  // if(req.body.sig_id === null ||
+  //    req.body.sig_id === undefined ||
+  //    req.body.sig_id === "") {
+  //   res.status(400).send('Error: signature not found');
+  //   return;
+  // }
 
 	//Create variables to prepare data for insertion into table
-	var sql = 'INSERT INTO users (email, password, fname, lname, creation_date, isAdmin, branch_id, sig_id) VALUES (?,?,?,?,?,?,?,?)';
+	var sql = 'INSERT INTO users (email, password, fname, lname, creation_date, isAdmin, branch_id) VALUES (?,?,?,?,?,?,?)';
 	var record = [req.body.email, req.body.password, req.body.fname,
                 req.body.lname, req.body.creation_date, req.body.isAdmin,
-                req.body.branch_id, req.body.sig_id];
+                req.body.branch_id];
 
 	//Insert row into users table
 	mysql.pool.query(sql, record, function(err, result) {
@@ -672,19 +666,19 @@ app.post('/API/users', (req, res) => {
     return;
   }
 
-  //Check that sig_id field exists in request
-  if(req.body.sig_id === null ||
-     req.body.sig_id === undefined ||
-     req.body.sig_id === "") {
-    res.status(400).send('Error: signature not found');
-    return;
-  }
+  // //Check that sig_id field exists in request
+  // if(req.body.sig_id === null ||
+  //    req.body.sig_id === undefined ||
+  //    req.body.sig_id === "") {
+  //   res.status(400).send('Error: signature not found');
+  //   return;
+  // }
 
   //Create variables to prepare data for insertion into table
-	var sql = 'INSERT INTO users (email, password, fname, lname, creation_date, isAdmin, branch_id, sig_id) VALUES (?,?,?,?,?,?,?,?)';
+	var sql = 'INSERT INTO users (email, password, fname, lname, creation_date, isAdmin, branch_id) VALUES (?,?,?,?,?,?,?)';
 	var record = [req.body.email, req.body.password, req.body.fname,
                 req.body.lname, req.body.creation_date, req.body.isAdmin,
-                req.body.branch_id, req.body.sig_id];
+                req.body.branch_id];
 
   //Insert row into users table
   mysql.pool.query(sql, record, function(err, result) {
@@ -1166,142 +1160,6 @@ if (session.loggedIn === 0) {
 			res.send(results);
 
 		});
-});
-
-/* ******************* Generate PDF Certificate Functions ******************* */
-function genpdf(userEmail, from, to, type, date){
-	const path = './award/' + userEmail + 'out.pdf'; //Path that will store the file we generate
-	const output = fs.createWriteStream(path);
-	//Write the pdf from LaTeX
-	const pdf = require("latex")(["\\documentclass[tikz, landscape]{slides}",
-		"\\usepackage{graphicx,pstricks,tikz}",
-		"\\usepackage[T1]{fontenc}",
-		"\\usepackage[margin=0in]{geometry}",
-		"\\linespread{1.3}",
-		"\\title{" + type + "\\\\}",
-		"\\author{\\textbf{\\LARGE{CONGRATULATIONS!\\\\\\\\Awarded to " + to + "}}}",
-		"\\date{Awarded on " + date + "}",
-		"\\noindent\\begin{document}",
-		"\\noindent\\begin{tikzpicture}",
-			"\\draw (0,0) node[inner sep=0]{\\centered\\includegraphics[width=0.95\\textwidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}};",
-			"\\noindent\\draw (0,3) node[text width=30em]{\\maketitle};",
-			//"\\write18{wget http://flip3.engr.oregonstate.edu:30444/image/jpeg;base64,/9j/4AAQSkZJ....};", //Theoretically, if you put your url here
-			//"\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{/image/jpeg;base64,/9j/4AAQSkZJ....}};", //and the name it gets once it's written, the image should show up from a url
-			"\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}};", // But idk how to test that so please try it out
-			"\\draw (0, -5) node{\\large{Awarded By: " + from + "}};",
-		"\\end{tikzpicture}",
-		"\\end{document}"]).pipe(output);
-
-	pdf.on('error', err => console.error(err)); //Watch the pipe for an error
-	pdf.on('finish', () => emailpdf(userEmail)); //Watch the pipe for finish, then email the pdf
-};
-
-function emailpdf(userEmail) {
-	console.log('PDF generated!'); 
-	//Generate body of email that will be sent
-	const output = `
-		<p color='blue'>Congratulations!</p>
-		<p>Someone has given you an award!</p>
-	`;
-	
-	// create reusable transporter object using the default SMTP transport
-	let transporter = nodemailer.createTransport({
-		service: 'gmail',
-		auth: {
-			user: 'noreplyserpens@gmail.com', // generated ethereal user
-			pass: 'serpens467' // generated ethereal password
-		},
-		tls:{
-			rejectUnauthorized:false //Accept untrustworthy stuff like us :)
-		}
-	});
-
-	// setup email data with unicode symbols
-	let mailOptions = {
-		from: '"Serpens Project" <noreplyserpens@gmail.com>', // sender address
-		to: userEmail, // list of receivers
-		subject: 'You Received an Award!', // Subject line
-		text: 'Hello world?', // plain text body
-		attachments: [{
-			filename: userEmail + 'out.pdf',
-			path: './award/' + userEmail + 'out.pdf',
-			contentType: 'application/pdf'
-		}],
-		html: output // html body
-	};
-
-	// send mail with defined transport object
-	transporter.sendMail(mailOptions, (error, info) => {
-		if (error) {
-			return console.log(error);
-		}
-		console.log('Message sent: %s', info.messageId);
-		console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-		res.status(200).render('recover', {msg:'Email sent'})
-	});
-};
-
-/* ******************* Recovery Functions ******************* */
-app.get('/forgotPassword', function(req, res) {
-	res.status(200).render('recover');
-});
-
-/* ------------- Recover Password Using Email --------- */
-app.post('/forgotPassword', (req, res) => {
-	var sql = 'SELECT fname, lname, password FROM users WHERE email = ?';
-	var context = {};
-	
-	mysql.pool.query (sql, [req.body.email], function(err, rows, fields){
-		if(err || rows.length == 0){ //If there was an error or no entries were returned
-			console.log(err);
-			JSON.stringify(err);
-			res.status(400).render('recover', {msg:'Account does not exist'});
-			return;
-		}
-		
-		//Generate body of email that will be sent
-		const output = `
-			<p>Hello, ${rows[0].fname} ${rows[0].lname}</p>
-			<p>Your account password has been requested on our website. If you did not request your password, please consider changing your account information on our website.</p>
-			<h3>Your account password: ${rows[0].password}</h3>
-		`;
-		
-		// create reusable transporter object using the default SMTP transport
-	    let transporter = nodemailer.createTransport({
-	    	service: 'gmail',
-	        auth: {
-	            user: 'noreplyserpens@gmail.com', // generated ethereal user
-	            pass: 'serpens467' // generated ethereal password
-	        },
-	        tls:{
-	        	rejectUnauthorized:false //Accept untrustworthy stuff like us :)
-	        }
-	    });
-	
-	    // setup email data with unicode symbols
-	    let mailOptions = {
-	        from: '"Serpens Project" <noreplyserpens@gmail.com>', // sender address
-	        to: req.body.email, // list of receivers
-	        subject: 'Recover Your Employee Recognition Account', // Subject line
-	        text: 'Hello world?', // plain text body
-	        /*attachments: [{
-		    filename: 'output.pdf',
-		    path: './output.pdf',
-		    contentType: 'application/pdf'
-		  	}],*/
-	        html: output // html body
-	    };
-	
-	    // send mail with defined transport object
-	    transporter.sendMail(mailOptions, (error, info) => {
-	        if (error) {
-	            return console.log(error);
-	        }
-	        console.log('Message sent: %s', info.messageId);
-	        console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
-			res.status(200).render('recover', {msg:'Email sent'})
-	    });
-	});
 });
 
 
