@@ -3,7 +3,7 @@
 //shows functionality of administrators table
 
 //const URL = "https://serpens-cs467.appspot.com/";
-const URL = "http://localhost:8080";
+//const URL = "http://localhost:8080";
 
 var app = new Vue({
   el: '#app',
@@ -94,7 +94,7 @@ var app = new Vue({
       vm.clearAllCharts()
 
       if (entities === "users" && award === "awards") {
-        fetch(URL + "/API/users/mostawards")
+        fetch("/API/users/mostawards")
         .then(function(response) {
     			return response.json();
     		})
@@ -106,7 +106,7 @@ var app = new Vue({
           }
     		})
       }else if (entities === "users" && award === "eotm_awards") {
-        fetch(URL + "/API/users/mostawards/eotm")
+        fetch("/API/users/mostawards/eotm")
         .then(function(response) {
     			return response.json();
     		})
@@ -118,7 +118,7 @@ var app = new Vue({
           }
     		})
       }else if (entities === "users" && award === "btp_awards") {
-        fetch(URL + "/API/users/mostawards/btp")
+        fetch("/API/users/mostawards/btp")
         .then(function(response) {
     			return response.json();
     		})
@@ -130,7 +130,7 @@ var app = new Vue({
           }
     		})
       }else if (entities === "branches" && award === "awards") {
-        fetch(URL + "/API/users/mostawards/branch")
+        fetch("/API/users/mostawards/branch")
         .then(function(response) {
     			return response.json();
     		})
@@ -161,7 +161,7 @@ var app = new Vue({
           })
         })
       }else if (entities === "branches" && award === "eotm_awards") {
-        fetch(URL + "/API/users/mostawards/branch/eotm")
+        fetch("/API/users/mostawards/branch/eotm")
         .then(function(response) {
     			return response.json();
     		})
@@ -192,7 +192,7 @@ var app = new Vue({
           })
         })
       }else if (entities === "branches" && award === "btp_awards") {
-        fetch(URL + "/API/users/mostawards/branch/btp")
+        fetch("/API/users/mostawards/branch/btp")
         .then(function(response) {
     			return response.json();
     		})
@@ -223,7 +223,7 @@ var app = new Vue({
           })
         })
       }else if (entities === "regions" && award === "awards") {
-          fetch(URL + "/API/users/mostawards/region")
+          fetch("/API/users/mostawards/region")
           .then(function(response) {
       			return response.json();
       		})
@@ -253,7 +253,7 @@ var app = new Vue({
             })
           })
       }else if (entities === "regions" && award === "eotm_awards") {
-          fetch(URL + "/API/users/mostawards/region/eotm")
+          fetch("/API/users/mostawards/region/eotm")
           .then(function(response) {
       			return response.json();
       		})
@@ -283,7 +283,7 @@ var app = new Vue({
             })
           })
       }else if (entities === "regions" && award === "btp_awards") {
-          fetch(URL + "/API/users/mostawards/region/btp")
+          fetch("/API/users/mostawards/region/btp")
           .then(function(response) {
       			return response.json();
       		})

@@ -32,7 +32,7 @@ app.set('mysql', mysql);
 
 
 /* ******************* Start Server ******************* */
-const server = app.listen(process.env.PORT || 6863, () => {
+const server = app.listen(process.env.PORT || 7294, () => {
   const port = server.address().port;
   console.log(`App listening on port ${port}`);
 });
@@ -1214,7 +1214,7 @@ function genpdf(userEmail, from, to, type, dateTime, image){
 		"\\noindent\\begin{tikzpicture}",
 			"\\draw (0,0) node[inner sep=0]{\\centered\\includegraphics[width=0.95\\textwidth]{/nfs/stak/users/holderms/Serpens-Capstone-Fall-2018/award/back}};",
 			"\\noindent\\draw (0,3) node[text width=30em]{\\maketitle};",
-			`\\write18{wget http://flip3.engr.oregonstate.edu:6863/${image}};`, //Theoretically, if you put your url here
+			`\\write18{wget http://flip3.engr.oregonstate.edu:7294/${image}};`, //Theoretically, if you put your url here
 			`\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{${image}}};`, //and the name it gets once it's written, the image should show up from a url
 			// "\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}};", // But idk how to test that so please try it out
 			"\\draw (0, -5) node{\\large{Awarded By: " + from + "}};",
