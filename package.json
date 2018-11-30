@@ -53,17 +53,18 @@
 		]
 	},
 	"dependencies": {
+		"blob": "latest",
 		"body-parser": "^1.18.3",
 		"express": "^4.16.2",
 		"express-handlebars": "^3.0.0",
 		"express-session": "^1.15.6",
+		"filereader": "latest",
 		"fs": "0.0.1-security",
 		"handlebars": "^4.0.12",
 		"mysql": "^2.16.0",
+		"pop": "latest",
 		"request": "^2.88.0",
-		"session": "^0.1.0",
-		"filereader": "latest",
-		"blob": "latest"
+		"session": "^0.1.0"
 	},
 	"devDependencies": {
 		"@google-cloud/nodejs-repo-tools": "2.2.1",
@@ -73,13 +74,4 @@
 	"engines": {
 		"node": "8.x.x"
 	},
-	"dendencies": {
-		"body-parser": "^1.13.3",
-		"express": "^4.16.2",
-		"express-handlebars": "^2.0.1",
-		"fs": "0.0.1-security",
-		"handlebars": "^4.0.11",
-		"mysql": "^2.8.0",
-		"request": "^2.83.0"
-	}
 }

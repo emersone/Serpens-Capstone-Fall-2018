@@ -1,11 +1,11 @@
 //Set-up
+const formidable = require('formidable');
+const FileReader = require('filereader');
 const path = require(`path`);
-const http = require(`http`);
 const mysql = require('./dbcon.js');
 const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
-
 const _ = require("lodash");
 const session = require("express-session");
 const handlebars = require('express-handlebars').create({defaultLayout:'main'});
@@ -22,9 +22,6 @@ session.loggedIn = 0;
 /* ******************* Frontend Pages ******************* */
 app.use('/static', express.static('public'));
 app.use('/admins', express.static(path.join(__dirname, '/admins')));
-// app.use('/login/admins', express.static(path.join(__dirname, '/login/admins')));
-//app.use('/users', express.static(path.join(__dirname, 'users')));
-// app.use('/login/users', express.static(path.join(__dirname, '/login/users')));
 
 app.engine('handlebars', handlebars.engine);
 app.set('view engine', 'handlebars');
@@ -42,7 +39,6 @@ const server = app.listen(process.env.PORT || 8080, () => {
 
 //display login page
 app.get('/', function(req, res) {
-  console.log("in login.js get");
   var context = {};
   res.render('login', context);
 });
@@ -55,12 +51,12 @@ app.get("/logOut", function(req, res){
 });
 
 const checkUserLogin = (email, password) => {
-  var SQL = "SELECT user_id, fname, branch_id, isAdmin FROM users WHERE email = ? AND password = ?";
+  var SQL = "SELECT user_id, isAdmin, sig_id FROM users WHERE email = ? AND password = ?";
   var inserts = [email, password];
   return new Promise((resolve, reject) => {
     mysql.pool.query(SQL, inserts, (error, results) => {
       if (!_.isEmpty(results)) {
-        resolve({id: results[0].user_id, name: results[0].fname, branch: results[0].branch_id, isAdmin: results[0].isAdmin});
+      		resolve(results[0]);
       }
       reject(error);
     });
@@ -75,11 +71,20 @@ app.post('/', (req, res) => {
       res.render('loginError', {});
     }
     else if (results.isAdmin === 0) {
-      session.loggedIn = results.id;
-      res.redirect("/awards");
+      session.loggedIn = results.user_id;
+      session.admin = results.isAdmin;
+      session.sig_id = results.sig_id;
+      if (results.sig_id !== null) {
+      	 res.redirect("/awards");
+      }
+      else {
+      	// prompt user to create a signature
+      	res.redirect("/profile");
+      }
     }
     else {
-      session.loggedIn = results.id;
+      session.loggedIn = results.user_id;
+      session.admin = results.isAdmin;
       res.redirect("/admins");
     }
   })
@@ -123,12 +128,14 @@ const getSignature = (sig_id) => {
 
 const updateProfile = (data, user_id) => {
   var SQL = "UPDATE users.users SET fname=?, lname=?, sig_id=? WHERE user_id=?";
-  var inserts = [data.fname, data.lname, parseInt(data.sig_id, 10), user_id];
+  var sig_id = data.sig_id ? parseInt(data.sig_id, 10) : null;
+  var inserts = [data.fname, data.lname, sig_id, user_id];
   return new Promise((resolve, reject) => {
     mysql.pool.query(SQL, inserts, (error, results) => {
       if (!_.isEmpty(results)) {
         resolve({});
       }
+   	  console.log(error);
       reject(error);
     });
   })
@@ -136,16 +143,13 @@ const updateProfile = (data, user_id) => {
 };
 
 const updateSignature = (data, sig_id) => {
-  //  console.log("Update signature");
   var SQL = "UPDATE users.signatures SET sig=?, sig_name=? WHERE sig_id=?";
   var inserts = [data.sig, data.sig_name, parseInt(sig_id, 10)];
   return new Promise((resolve, reject) => {
     mysql.pool.query(SQL, inserts, (error, results) => {
       if (!_.isEmpty(results)) {
-        //      	console.log(results);
         resolve({});
       }
-      //      console.log(error);
       reject(error);
     });
   })
@@ -158,9 +162,9 @@ const addSignature = (data) => {
   return new Promise((resolve, reject) => {
     mysql.pool.query(SQL, inserts, (error, results) => {
       if (!_.isEmpty(results)) {
+      	session.sig_id = results.insertId;
         resolve({insertId: results.insertId});
       }
-      console.log(error);
       reject(error);
     });
   })
@@ -168,19 +172,20 @@ const addSignature = (data) => {
 };
 
 app.get("/profile", (req, res) => {
-  if (session.loggedIn !== 0) {
+  if (session.loggedIn !== 0 && !session.admin) {
     getProfile(session.loggedIn).then((data) => {
       const pageData = {
         fname: data[0].fname,
         lname: data[0].lname,
-        sig_id: data[0].sig_id === null ? 0 : data[0].sig_id
+        sig_id: data[0].sig_id, // === null ? 0 : data[0].sig_id
+        sig_name: "None selected"
       };
       if (data[0].sig_id === null) {
         res.render("profile", pageData);
       }
       else {
         getSignature(data[0].sig_id).then((sigData) => {
-          pageData.sig_name = sigData[0].sig_name === "None selected" ? null : sigData[0].sig_name
+          pageData.sig_name = sigData[0].sig_name;
           res.render("profile", pageData);
         });
       }
@@ -193,59 +198,70 @@ app.get("/profile", (req, res) => {
 
 app.post("/profile", (req, res) => {
   // handle file https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications
-  if (session.loggedIn !== 0) {
+  if (session.loggedIn !== 0 && !session.admin) {
     // New sig not provided
     var form = new formidable.IncomingForm();
     form.parse(req, (err, fields, files) => {
       if (files.sig.size === 0) {
-        console.log("No file update");
+      	console.log(fields.sig_id === "/");
+      	fields.sig_id = fields.sig_id === "/" ? null : fields.sig_id;
+      	console.log("update profile");
+      	console.log(fields);
         updateProfile(fields, session.loggedIn).then(() => {
           getProfile(session.loggedIn).then((data) => {
+          	data[0].sig_name = fields.sig_name;
             res.render("profile", data[0]);
           });
         });
       }
       // signature has been added or updated
       else {
-        const reader = new FileReader();
-        let imgURL;
-        reader.onload = function () {
-          imgURL = reader.result;
-          if (parseInt(fields.sig_id, 10) !== 0) {
-            const sigData = {
-              sig_name: files.sig.name,
-              sig: imgURL
-            };
-            Promise.all([updateProfile(fields, session.loggedIn), updateSignature(sigData, fields.sig_id)])
-            .then(() => {
-              getProfile(session.loggedIn).then((data) => {
-                res.render("profile", data[0]);
-              });
-            });
-          }
-          // is a new signature
-          else {
-            console.log("new Signature");
-            const sigData = {
-              sig_name: files.sig.name,
-              sig: imgURL
-            };
-            addSignature(sigData)
-            .then((data) => {
-              const profileData = {
-                fname: fields.fname,
-                lname: fields.lname,
-                sig_id: data.insertId,
-              };
-              updateProfile(profileData, session.loggedIn).then(() => {
-                getProfile(session.loggedIn).then((data) => {
-                  res.render("profile", data[0]);
-                });
-              });
-            });
-          }
-        };
-        reader.readAsDataURL(files.sig);
+      	if (files.sig.type.slice(0, 5) !== 'image') {
+      		res.end();
+      	}
+      	else {
+	        const reader = new FileReader();
+	        let imgURL;
+	        reader.onload = function () {
+	          imgURL = reader.result;
+			// Apparently handlebars converts null values into '/'
+	          if (fields.sig_id !== "/") {
+	            const sigData = {
+	              sig_name: files.sig.name,
+	              sig: imgURL
+	            };
+	            Promise.all([updateProfile(fields, session.loggedIn), updateSignature(sigData, fields.sig_id)])
+	            .then(() => {
+	              getProfile(session.loggedIn).then((data) => {
+	              	data[0].sig_name = files.sig.name;
+	                res.render("profile", data[0]);
+	              });
+	            });
+	          }
+	          // is a new signature
+	          else {
+	            const sigData = {
+	              sig_name: files.sig.name,
+	              sig: imgURL
+	            };
+	            addSignature(sigData)
+	            .then((data) => {
+	              const profileData = {
+	                fname: fields.fname,
+	                lname: fields.lname,
+	                sig_id: data.insertId,
+	              };
+	              updateProfile(profileData, session.loggedIn).then(() => {
+	                getProfile(session.loggedIn).then((data) => {
+	                	data[0].sig_name = files.sig.name;
+	                    res.render("profile", data[0]);
+	                });
+	              });
+	            });
+	          }
+	        };
+	        reader.readAsDataURL(files.sig);
+	      }
       }
     });
   }
@@ -257,7 +273,6 @@ app.post("/profile", (req, res) => {
 // for test purposes to fetch and display a signature in the browser
 app.get("/signature", (req, res) => {
   getSignature("5").then((data) => {
-    console.log(data[0].sig);
     res.render('testSignature', {data: data[0].sig});
   });
 });
@@ -269,8 +284,6 @@ const getAwards = (user_id) => {
   return new Promise((resolve, reject) => {
     mysql.pool.query(SQL, (error, results) => {
       if (error) {
-        console.log(error);
-        console.log(results);
         reject(error);
       }
       resolve(results.map((entry) => {
@@ -301,8 +314,6 @@ const deleteAward = (award_id, user_id) => {
   return new Promise((resolve, reject) => {
     mysql.pool.query(SQL, (error, results) => {
       if (error) {
-        console.log(error);
-        console.log(results);
         reject(error);
       }
       resolve(results);
@@ -314,7 +325,6 @@ const deleteAward = (award_id, user_id) => {
 const updateAward = (data, user_id) => {
   var SQL = "UPDATE users.awards SET type=?, recip_name=?, recip_email=?, date_given=? WHERE award_id=? AND creator_user_id=?";
   var inserts = [data.type, data.recip_name, data.recip_email, data.date_given, parseInt(data.award_id, 10), user_id];
-  //  console.log(inserts);
   return new Promise((resolve, reject) => {
     mysql.pool.query(SQL, inserts, (error, results) => {
       if (!_.isEmpty(results)) {
@@ -327,10 +337,13 @@ const updateAward = (data, user_id) => {
 };
 
 app.get("/awards", (req, res) => {
-  if (session.loggedIn !== 0) {
+  if (session.loggedIn !== 0 && !session.admin) {
     const thisUser = session.loggedIn;
     getAwards(thisUser).then((data) => {
-      res.render('awards', {"data": data});
+      res.render('awards', {
+      	"data": data,
+      	sig_id: session.sig_id
+  	  });
     });
   }
   else {
@@ -339,42 +352,51 @@ app.get("/awards", (req, res) => {
 });
 
 app.post("/awards", (req, res) => {
-  //	console.log(req.body);
-  if (session.loggedIn !== 0) {
+  if (session.loggedIn !== 0 && !session.admin) {
     const thisUser = session.loggedIn;
     if (Object.keys(req.body).indexOf("delete") > -1) {
       deleteAward(req.body.award_id, thisUser).then(() => {
-        getAwards(thisUser).then((data) => {
-          res.render('awards', {"data": data});
-        });
+	    getAwards(thisUser).then((data) => {
+	      res.render('awards', {
+	      	"data": data,
+	      	sig_id: session.sig_id
+	  	  });
+	    });
       });
     }
     else if (Object.keys(req.body).indexOf("update") > -1) {
-      console.log("In update");
       updateAward(req.body, thisUser).then(() => {
-        getAwards(thisUser).then((data) => {
-          res.render('awards', {"data": data});
-        });
+	    getAwards(thisUser).then((data) => {
+	      res.render('awards', {
+	      	"data": data,
+	      	sig_id: session.sig_id
+	  	  });
+	    });
       });
     }
     else if (Object.keys(req.body).indexOf("add") > -1) {
-      console.log("In add");
       newAward(req.body, thisUser).then(() => {
-        getAwards(thisUser).then((data) => {
-          res.render('awards', {"data": data});
-        });
+	    getAwards(thisUser).then((data) => {
+	      res.render('awards', {
+	      	"data": data,
+	      	sig_id: session.sig_id
+	  	  });
+	    });
       });
     }
     else if (Object.keys(req.body).indexOf("email") > -1) {
-	  	console.log("In email");
 	  	// update in case user made changes
 	    Promise.all([updateAward(req.body, thisUser), getProfile(thisUser)]).then((results) => {
-	    	//(userEmail,from, to, type)
-	    	genpdf(req.body.recip_email, `${results[1].fname} ${results[1].lname}`,req.body.recip_name, req.body.type);
-	   		// re-render page in case user made changes
-	   		getAwards(thisUser).then((data) => {
-		        res.render('awards', {"data": data});
-		    });
+        getSignature(results[1].sig_id).then((imageData) => {
+          genpdf(req.body.recip_email, `${results[1].fname} ${results[1].lname}`,req.body.recip_name, req.body.type, imageData.sig);
+          // re-render page in case user made changes
+          getAwards(thisUser).then((data) => {
+            res.render('awards', {
+              "data": data,
+              sig_id: session.sig_id
+            });
+          });
+        });
 	    });
 	  }
     else {
@@ -483,7 +505,7 @@ app.post('/API/admins', (req, res) => {
 app.get('/API/admins', (req, res) => {
   console.log("GET /API/admins");
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -507,7 +529,7 @@ app.get('/API/admins', (req, res) => {
 app.get('/API/admins/:admin_id', (req, res) => {
   console.log("GET /API/admins/:admin_id");
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -534,7 +556,7 @@ app.get('/API/admins/:admin_id', (req, res) => {
 app.put('/API/admins/:admin_id', (req, res) => {
   console.log("PUT /API/admins/:admin_id");
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -576,7 +598,7 @@ app.put('/API/admins/:admin_id', (req, res) => {
 app.delete('/API/admins/:admin_id', (req, res) => {
   console.log("DELETE /API/admins/:admin_id");
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -603,7 +625,7 @@ app.delete('/API/admins/:admin_id', (req, res) => {
 app.post('/API/users', (req, res) => {
   console.log("POST /API/users")
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -699,7 +721,7 @@ app.post('/API/users', (req, res) => {
 app.get('/API/users', (req, res) => {
   console.log("GET /API/users")
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -723,7 +745,7 @@ app.get('/API/users', (req, res) => {
 app.get('/API/users/mostawards', function(req, res, next) {
 console.log("GET /API/users/mostawards")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -757,7 +779,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/eotm', function(req, res, next) {
 console.log("GET /API/users/mostawards/eotm")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -795,7 +817,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/btp', function(req, res, next) {
 console.log("GET /API/users/mostawards/btp")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -833,7 +855,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/:user_id', (req, res) => {
   console.log("GET /API/users/:user_id")
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -860,7 +882,7 @@ app.get('/API/users/:user_id', (req, res) => {
 app.put('/API/users/:user_id', (req, res) => {
   console.log("PUT /API/users/:user_id")
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -901,7 +923,7 @@ app.put('/API/users/:user_id', (req, res) => {
 app.delete('/API/users/:user_id', (req, res) => {
   console.log("DELETE /API/users/:user_id")
 
-  if (session.loggedIn === 0) {
+  if (session.loggedIn === 0 || !session.admin) {
     res.status(403).end()
     return
   }
@@ -929,7 +951,7 @@ app.delete('/API/users/:user_id', (req, res) => {
 app.get('/API/users/mostawards/region', function(req, res, next) {
 console.log("GET /API/users/mostawards/region")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -968,7 +990,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/region/eotm', function(req, res, next) {
 console.log("GET /API/users/mostawards/region/eotm")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -1010,7 +1032,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/region/btp', function(req, res, next) {
 console.log("GET /API/users/mostawards/region/btp")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -1052,7 +1074,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/branch', function(req, res, next) {
 console.log("GET /API/users/mostawards/branch")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -1085,7 +1107,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/branch/eotm', function(req, res, next) {
 console.log("GET /API/users/mostawards/branch/eotm")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -1126,7 +1148,7 @@ if (session.loggedIn === 0) {
 app.get('/API/users/mostawards/branch/btp', function(req, res, next) {
 console.log("GET /API/users/mostawards/branch/btp")
 
-if (session.loggedIn === 0) {
+if (session.loggedIn === 0 || !session.admin) {
   res.status(403).end()
   return
 }
@@ -1162,6 +1184,220 @@ if (session.loggedIn === 0) {
 		});
 });
 
+/* ******************* Generate PDF Certificate Functions ******************* */
+function genpdf(userEmail, from, to, type, date, image){
+	//const input = fs.createReadStream('./emp.tex');
+	const path = './award/' + userEmail + 'out.pdf';
+	const output = fs.createWriteStream(path);
+	//const pdf = latex(input);
+	const pdf = require("latex")(["\\documentclass[tikz, landscape]{slides}",
+		"\\usepackage{graphicx,pstricks,tikz}",
+		"\\usepackage[T1]{fontenc}",
+		"\\usepackage[margin=0in]{geometry}",
+		"\\linespread{1.3}",
+		//"\\includegraphics[width=1.0\\linewidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}",
+		"\\title{" + type + "\\\\}",
+		"\\author{\\textbf{\\LARGE{CONGRATULATIONS!\\\\\\\\Awarded to " + to + "}}}",
+		"\\date{Awarded on " + date + "}",
+		"\\noindent\\begin{document}",
+		"\\noindent\\begin{tikzpicture}",
+			"\\draw (0,0) node[inner sep=0]{\\centered\\includegraphics[width=0.95\\textwidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}};",
+			"\\noindent\\draw (0,3) node[text width=30em]{\\maketitle};",
+			`\\write18{wget http://flip3.engr.oregonstate.edu:30444/${image}};`, //Theoretically, if you put your url here
+			`\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{${image}}};`, //and the name it gets once it's written, the image should show up from a url
+			"\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}};", // But idk how to test that so please try it out
+			"\\draw (0, -5) node{\\large{Awarded By: " + from + "}};",
+		"\\end{tikzpicture}",
+		/*"\\begin{picture}(100,100)",
+		"\\includegraphics[width=1.0\\linewidth,height=1.0\\linewidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}",
+		"\\put(50,50){hello}",
+		//"\\put(50, 50){\\maketitle}",
+		//"\\put(30,40){includegraphics[width=0.1\\linewidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}}",
+		"\\end{picture}",*/
+		//"\\maketitle",
+		//"\\includegraphics{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}",
+		"\\end{document}"]).pipe(output);
+/*const pdf = require("latex")(["\\documentclass[16pt, landscape]{article}",
+"\\usepackage[a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}",
+"\\usepackage{pdflscape,setspace,amsmath,amssymb}",
+"\\usepackage[utf8]{inputenc}",
+"\\usepackage[T1]{fontenc}",
+"\\usepackage{tgschola}",
+"\\usepackage{graphicx}",
+"\\usepackage[normalem]{ulem}",
+"\\usepackage{charter}",
+"\\usepackage{microtype}",
+"\\hyphenpenalty 100000",
+/*"\\def\\signature#1#2{\\parbox[b]{1in}{\\smash{#1}\\vskip12pt}",
+"\\hfill \\parbox[t]{2.8in}{\\shortstack{\\vrule width 2.8in height 0.4pt\\\\small#2}}}",
+"\\def\\sigskip{\\vskip0.4in plus 0.1in}",
+        "\\def\\beginskip{\\vskip0.5875in plus 0.1in}",*/
+/*"\\begin{document}",
+"\\begin{center}",
+	"\\noindent\\makebox[\\textwidth]{\\includegraphics[width=\\paperwidth,height=\\paperheight]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back},",
+		"\\title{" + type + "},",
+		"\\author{" + from + "},",
+		"\\date{\\today},}",
+"\\end{center}",
+/*"\\begin{minipage}[c]{6.5in}",
+"{\\centering",
+	"{\\onehalfspacing",
+		"{\\LARGE\\bfseries {\\color{other}{{ Pondicherry  Engineering College}}}}\\\\%\\initfamily",
+		"\\vskip0.4em",
+		"{\\large ISTE Short Term Training Program on\\\\}",
+		"{\\Large\\bfseries{NANO ENGINEERING MATERIALS}}}\\\\",
+	"\\par}",
+"\\end{minipage}",
+"\\hfill",
+"\\begin{minipage}[l]{1.5in}",
+"\\end{minipage}",
+"\\hfill",
+"\\begin{minipage}[c]{6.5in}",
+"{\\centering",
+	"{\\onehalfspacing",
+		"{\\Large\\bfseries \\color{title}{Certificate of Participation}}\\par",
+		"\\vskip0.5em",
+		"{\\Large\\decofourleft\\quad{\\color{blue}\\decoone}\\quad\\decofourright}",
+	"\\par}}",
+"\\end{minipage}",
+"\\hfill",
+"\\begin{minipage}[r]{1.5in}",
+"\\end{minipage}",
+"\\vskip1.8em",
+"{\\doublespacing",
+"This is to certify that \\uuline{{\\large\\sffamily\\bfseries\\color{name}{\\dg. \\MakeUppercase{\\name}}}}, { \\dgn}",
+"of {\\sub}, {\\inst}, {\\place},",
+"has successfully participated in the two week  Short  Term   Training  Program",
+"on  ``\\emph{\\color{phd}{Nano   Engineering   Materials}}''   sponsored   by  ISTE  and  organized  by  Department of  Physics, Pondicherry  Engineering   College,  Puducherry,  from",
+"13$^{\\text{th}}$ December to 23$^{\\text{rd}}$ December 2010.}",
+"\\noindent",
+"{\\singlespacing",
+"\\vfil",
+"\\begin{minipage}[l]{2.8in}",
+"\\sigskip \\signature{}{Dr. Harish Kumar \\\\ Co-ordinator }",
+"\\end{minipage}",
+"\\hfill",
+"\\begin{minipage}[c]{2.8in}",
+"\\sigskip \\signature{}{Dr. Harish Kumar \\\\ Co-ordinator }",
+"\\end{minipage}",
+"\\hfill",
+"\\begin{minipage}[r]{2.8in}",
+"\\sigskip \\signature{}{Dr. Harish Kumar \\\\ Principal }",
+"\\end{minipage}} ",
+"\\pagebreak}",*/
+/*"\\end{document}"]).pipe(output);*/
+	//Watch the write stream for it to finish, then send the email to the user
+	pdf.on('error', err => console.error(err));
+	pdf.on('finish', () => emailpdf(userEmail));
+};
+
+function emailpdf(userEmail) {
+	console.log('PDF generated!');
+	//Generate body of email that will be sent
+	const output = `
+		<p color='blue'>Congratulations!</p>
+		<p>Someone has given you an award!</p>
+	`;
+
+	// create reusable transporter object using the default SMTP transport
+	let transporter = nodemailer.createTransport({
+		service: 'gmail',
+		auth: {
+			user: 'noreplyserpens@gmail.com', // generated ethereal user
+			pass: 'serpens467' // generated ethereal password
+		},
+		tls:{
+			rejectUnauthorized:false //Accept untrustworthy stuff like us :)
+		}
+	});
+
+	// setup email data with unicode symbols
+	let mailOptions = {
+		from: '"Serpens Project" <noreplyserpens@gmail.com>', // sender address
+		to: userEmail, // list of receivers
+		subject: 'You Received an Award!', // Subject line
+		text: 'Hello world?', // plain text body
+		attachments: [{
+			filename: userEmail + 'out.pdf',
+			path: './award/' + userEmail + 'out.pdf',
+			contentType: 'application/pdf'
+		}],
+		html: output // html body
+	};
+
+	// send mail with defined transport object
+	transporter.sendMail(mailOptions, (error, info) => {
+		if (error) {
+			return console.log(error);
+		}
+		console.log('Message sent: %s', info.messageId);
+		console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+		res.status(200).render('recover', {msg:'Email sent'})
+	});
+};
+
+/* ******************* Recovery Functions ******************* */
+app.get('/forgotPassword', function(req, res) {
+	res.status(200).render('recover');
+});
+
+/* ------------- Recover Password Using Email --------- */
+app.post('/forgotPassword', (req, res) => {
+	var sql = 'SELECT fname, lname, password FROM users WHERE email = ?';
+	var context = {};
+
+	mysql.pool.query (sql, [req.body.email], function(err, rows, fields){
+		if(err || rows.length == 0){ //If there was an error or no entries were returned
+			console.log(err);
+			JSON.stringify(err);
+			res.status(400).render('recover', {msg:'Account does not exist'});
+			return;
+		}
+
+		//Generate body of email that will be sent
+		const output = `
+			<p>Hello, ${rows[0].fname} ${rows[0].lname}</p>
+			<p>Your account password has been requested on our website. If you did not request your password, please consider changing your account information on our website.</p>
+			<h3>Your account password: ${rows[0].password}</h3>
+		`;
+
+		// create reusable transporter object using the default SMTP transport
+	    let transporter = nodemailer.createTransport({
+	    	service: 'gmail',
+	        auth: {
+	            user: 'noreplyserpens@gmail.com', // generated ethereal user
+	            pass: 'serpens467' // generated ethereal password
+	        },
+	        tls:{
+	        	rejectUnauthorized:false //Accept untrustworthy stuff like us :)
+	        }
+	    });
+
+	    // setup email data with unicode symbols
+	    let mailOptions = {
+	        from: '"Serpens Project" <noreplyserpens@gmail.com>', // sender address
+	        to: req.body.email, // list of receivers
+	        subject: 'Recover Your Employee Recognition Account', // Subject line
+	        text: 'Hello world?', // plain text body
+	        /*attachments: [{
+		    filename: 'output.pdf',
+		    path: './output.pdf',
+		    contentType: 'application/pdf'
+		  	}],*/
+	        html: output // html body
+	    };
+
+	    // send mail with defined transport object
+	    transporter.sendMail(mailOptions, (error, info) => {
+	        if (error) {
+	            return console.log(error);
+	        }
+	        console.log('Message sent: %s', info.messageId);
+	        console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+			res.status(200).render('recover', {msg:'Email sent'})
+	    });
+	});
+});
 
 /* ------------- Error Handling Functions ------------- */
 
