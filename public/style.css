@@ -7,19 +7,18 @@ head {
 body {
   text-align: center;
   align-content: center;
-  width: 100%;
+
   margin: auto;
 }
 
 ul, #loginInfo {
   text-align: left;
-  margin-left: 35%;
+  /* margin-left: 35%; */
 }
 
-textarea {
-  width: 100%;
-  height: 150px;
-  overflow: scroll;
+#login {
+  width: 20em;
+  margin: auto;
 }
 
 .carousel-item {
@@ -37,3 +36,4 @@ textarea {
 	align-content: center;
 	margin: auto;
 }
+
