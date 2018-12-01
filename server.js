@@ -32,7 +32,7 @@ app.set('mysql', mysql);
 
 
 /* ******************* Start Server ******************* */
-const server = app.listen(process.env.PORT || 7294, () => {
+const server = app.listen(process.env.PORT || 6863, () => {
   const port = server.address().port;
   console.log(`App listening on port ${port}`);
 });
@@ -201,11 +201,13 @@ app.get("/profile", (req, res) => {
 });
 
 app.post("/profile", (req, res) => {
+  // console.log(req);
   // handle file https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications
   if (session.loggedIn !== 0 && !session.admin) {
     // New sig not provided
     var form = new formidable.IncomingForm();
     form.parse(req, (err, fields, files) => {
+      console.log(files.sig.path);
       if (files.sig.size === 0) {
       	console.log(fields.sig_id === "/");
       	fields.sig_id = fields.sig_id === "/" ? null : fields.sig_id;
@@ -224,47 +226,45 @@ app.post("/profile", (req, res) => {
       		res.end();
       	}
       	else {
-	        const reader = new FileReader();
-	        let imgURL;
-	        reader.onload = function () {
-	          imgURL = reader.result;
-			// Apparently handlebars converts null values into '/'
-	          if (fields.sig_id !== "/") {
-	            const sigData = {
-	              sig_name: files.sig.name,
-	              sig: imgURL
-	            };
-	            Promise.all([updateProfile(fields, session.loggedIn), updateSignature(sigData, fields.sig_id)])
-	            .then(() => {
-	              getProfile(session.loggedIn).then((data) => {
-	              	data[0].sig_name = files.sig.name;
-	                res.render("profile", data[0]);
-	              });
-	            });
-	          }
-	          // is a new signature
-	          else {
-	            const sigData = {
-	              sig_name: files.sig.name,
-	              sig: imgURL
-	            };
-	            addSignature(sigData)
-	            .then((data) => {
-	              const profileData = {
-	                fname: fields.fname,
-	                lname: fields.lname,
-	                sig_id: data.insertId,
-	              };
-	              updateProfile(profileData, session.loggedIn).then(() => {
-	                getProfile(session.loggedIn).then((data) => {
-	                	data[0].sig_name = files.sig.name;
-	                    res.render("profile", data[0]);
-	                });
-	              });
-	            });
-	          }
-	        };
-	        reader.readAsDataURL(files.sig);
+          let imgURL = files.sig.path;
+          let buff = fs.readFileSync(imgURL);
+          imgURL = buff;
+
+
+          if (fields.sig_id !== "/") {
+            const sigData = {
+              sig_name: files.sig.name,
+              sig: imgURL
+            };
+            Promise.all([updateProfile(fields, session.loggedIn), updateSignature(sigData, fields.sig_id)])
+            .then(() => {
+              getProfile(session.loggedIn).then((data) => {
+              	data[0].sig_name = files.sig.name;
+                res.render("profile", data[0]);
+              });
+            });
+          }
+          // is a new signature
+          else {
+            const sigData = {
+              sig_name: files.sig.name,
+              sig: imgURL
+            };
+            addSignature(sigData)
+            .then((data) => {
+              const profileData = {
+                fname: fields.fname,
+                lname: fields.lname,
+                sig_id: data.insertId,
+              };
+              updateProfile(profileData, session.loggedIn).then(() => {
+                getProfile(session.loggedIn).then((data) => {
+                	data[0].sig_name = files.sig.name;
+                    res.render("profile", data[0]);
+                });
+              });
+            });
+          }
 	      }
       }
     });
@@ -275,10 +275,7 @@ app.post("/profile", (req, res) => {
 });
 
 app.get("/signature", (req, res) => {
-  console.log(req.query);
-  getSignature(req.query.id).then((data) => {
-    res.render('testSignature', {data: data.sig});
-  });
+  res.render('testSignature', {data: req.query.id});
 });
 
 app.get("/signatureOnly", (req, res) => {
@@ -398,11 +395,8 @@ app.post("/awards", (req, res) => {
     else if (Object.keys(req.body).indexOf("email") > -1) {
 	  	// update in case user made changes
 	    Promise.all([updateAward(req.body, thisUser), getProfile(thisUser)]).then((results) => {
-        getSignature(results[1][0].sig_id).then((imageData) => {
-          // genpdf(userEmail, from, to, type, date, image)
-          // const sig = (imageData.sig).slice(5);
-          const sig = (imageData.sig);
-          genpdf(req.body.recip_email, `${results[1][0].fname} ${results[1][0].lname}`,req.body.recip_name, req.body.type, req.body.date_given, sig, imageData.sig_name);
+          // genpdf(userEmail, from, to, type, date, image_id)
+          genpdf(req.body.recip_email, `${results[1][0].fname} ${results[1][0].lname}`,req.body.recip_name, req.body.type, req.body.date_given, results[1][0].sig_id);
           // re-render page in case user made changes
           getAwards(thisUser).then((data) => {
             res.render('awards', {
@@ -410,7 +404,6 @@ app.post("/awards", (req, res) => {
               sig_id: session.sig_id
             });
           });
-        });
 	    });
 	  }
     else {
@@ -421,7 +414,6 @@ app.post("/awards", (req, res) => {
     res.render('notLoggedIn', {});
   }
 });
-
 /* ******************* Backend Functions ******************* */
 
 /*------------- Create an admin -------------*/
@@ -1199,116 +1191,49 @@ if (session.loggedIn === 0 || !session.admin) {
 });
 
 /* ******************* Generate PDF Certificate Functions ******************* */
-function genpdf(userEmail, from, to, type, dateTime, image){
-  const options = { year: 'numeric', month: 'long', day: 'numeric' };
-  let date = new Date(dateTime);
-  date = date.toLocaleDateString('en-US', options);
-  // console.log(`\\write18{wget http://flip3.engr.oregonstate.edu:6863/${image}};`);
-  // console.log(`\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{${image}}};`)
+var request = require('request'); //Extra library you will need
 
-	//const input = fs.createReadStream('./emp.tex');
+function genpdf(userEmail, from, to, type, dateTime, image_id){
+var download = function(uri, filename, callback){
+		request(uri, function(err, res, body){
+			console.log('content-type:', res.headers['content-type']);
+			console.log('content-length:', res.headers['content-length']);
+
+			request(uri).pipe(fs.createWriteStream(filename)).on('close', callback);
+	});
+};
+	const options = { year: 'numeric', month: 'long', day: 'numeric' };
+	let date = new Date(dateTime);
+	date = date.toLocaleDateString('en-US', options);
+
 	const path = './award/' + userEmail + 'out.pdf';
 	const output = fs.createWriteStream(path);
-	//const pdf = latex(input);
+	var url = `http://flip3.engr.oregonstate.edu:6863/signatureOnly?id=${image_id}`; //Your URL goes here
+  console.log(url);
+
+//'https://www.google.com/images/srpr/logo3w.png';
+
+download(url, './award/sig.png', function(){
 	const pdf = require("latex")(["\\documentclass[tikz, landscape]{slides}",
 		"\\usepackage{graphicx,pstricks,tikz}",
 		"\\usepackage[T1]{fontenc}",
 		"\\usepackage[margin=0in]{geometry}",
 		"\\linespread{1.3}",
-		//"\\includegraphics[width=1.0\\linewidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}",
 		"\\title{" + type + "\\\\}",
 		"\\author{\\textbf{\\LARGE{CONGRATULATIONS!\\\\\\\\Awarded to " + to + "}}}",
 		"\\date{Awarded on " + date + "}",
 		"\\noindent\\begin{document}",
 		"\\noindent\\begin{tikzpicture}",
-			"\\draw (0,0) node[inner sep=0]{\\centered\\includegraphics[width=0.95\\textwidth]{/nfs/stak/users/holderms/Serpens-Capstone-Fall-2018/award/back}};",
+			"\\draw (0,0) node[inner sep=0]{\\centered\\includegraphics[width=0.95\\textwidth]{/nfs/stak/users/holderms/Capstone/award/back}};",
 			"\\noindent\\draw (0,3) node[text width=30em]{\\maketitle};",
-			`\\write18{wget http://flip3.engr.oregonstate.edu:7294/${image}};`, //Theoretically, if you put your url here
-			`\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{${image}}};`, //and the name it gets once it's written, the image should show up from a url
-			// "\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}};", // But idk how to test that so please try it out
+			"\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{/nfs/stak/users/holderms/Capstone/award/sig}};", //This is the file path to the signature image
+			//"\\draw (0,-3) node{\\includegraphics[width=6cm,height=3cm]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}};", //Default sig
 			"\\draw (0, -5) node{\\large{Awarded By: " + from + "}};",
 		"\\end{tikzpicture}",
-		/*"\\begin{picture}(100,100)",
-		"\\includegraphics[width=1.0\\linewidth,height=1.0\\linewidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back}",
-		"\\put(50,50){hello}",
-		//"\\put(50, 50){\\maketitle}",
-		//"\\put(30,40){includegraphics[width=0.1\\linewidth]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}}",
-		"\\end{picture}",*/
-		//"\\maketitle",
-		//"\\includegraphics{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/sig}",
 		"\\end{document}"]).pipe(output);
-/*const pdf = require("latex")(["\\documentclass[16pt, landscape]{article}",
-"\\usepackage[a4paper,left=2cm,right=2cm,top=2cm,bottom=2cm]{geometry}",
-"\\usepackage{pdflscape,setspace,amsmath,amssymb}",
-"\\usepackage[utf8]{inputenc}",
-"\\usepackage[T1]{fontenc}",
-"\\usepackage{tgschola}",
-"\\usepackage{graphicx}",
-"\\usepackage[normalem]{ulem}",
-"\\usepackage{charter}",
-"\\usepackage{microtype}",
-"\\hyphenpenalty 100000",
-/*"\\def\\signature#1#2{\\parbox[b]{1in}{\\smash{#1}\\vskip12pt}",
-"\\hfill \\parbox[t]{2.8in}{\\shortstack{\\vrule width 2.8in height 0.4pt\\\\small#2}}}",
-"\\def\\sigskip{\\vskip0.4in plus 0.1in}",
-        "\\def\\beginskip{\\vskip0.5875in plus 0.1in}",*/
-/*"\\begin{document}",
-"\\begin{center}",
-	"\\noindent\\makebox[\\textwidth]{\\includegraphics[width=\\paperwidth,height=\\paperheight]{/nfs/stak/users/mcguganr/Serpens-Capstone-Fall-2018/award/back},",
-		"\\title{" + type + "},",
-		"\\author{" + from + "},",
-		"\\date{\\today},}",
-"\\end{center}",
-/*"\\begin{minipage}[c]{6.5in}",
-"{\\centering",
-	"{\\onehalfspacing",
-		"{\\LARGE\\bfseries {\\color{other}{{ Pondicherry  Engineering College}}}}\\\\%\\initfamily",
-		"\\vskip0.4em",
-		"{\\large ISTE Short Term Training Program on\\\\}",
-		"{\\Large\\bfseries{NANO ENGINEERING MATERIALS}}}\\\\",
-	"\\par}",
-"\\end{minipage}",
-"\\hfill",
-"\\begin{minipage}[l]{1.5in}",
-"\\end{minipage}",
-"\\hfill",
-"\\begin{minipage}[c]{6.5in}",
-"{\\centering",
-	"{\\onehalfspacing",
-		"{\\Large\\bfseries \\color{title}{Certificate of Participation}}\\par",
-		"\\vskip0.5em",
-		"{\\Large\\decofourleft\\quad{\\color{blue}\\decoone}\\quad\\decofourright}",
-	"\\par}}",
-"\\end{minipage}",
-"\\hfill",
-"\\begin{minipage}[r]{1.5in}",
-"\\end{minipage}",
-"\\vskip1.8em",
-"{\\doublespacing",
-"This is to certify that \\uuline{{\\large\\sffamily\\bfseries\\color{name}{\\dg. \\MakeUppercase{\\name}}}}, { \\dgn}",
-"of {\\sub}, {\\inst}, {\\place},",
-"has successfully participated in the two week  Short  Term   Training  Program",
-"on  ``\\emph{\\color{phd}{Nano   Engineering   Materials}}''   sponsored   by  ISTE  and  organized  by  Department of  Physics, Pondicherry  Engineering   College,  Puducherry,  from",
-"13$^{\\text{th}}$ December to 23$^{\\text{rd}}$ December 2010.}",
-"\\noindent",
-"{\\singlespacing",
-"\\vfil",
-"\\begin{minipage}[l]{2.8in}",
-"\\sigskip \\signature{}{Dr. Harish Kumar \\\\ Co-ordinator }",
-"\\end{minipage}",
-"\\hfill",
-"\\begin{minipage}[c]{2.8in}",
-"\\sigskip \\signature{}{Dr. Harish Kumar \\\\ Co-ordinator }",
-"\\end{minipage}",
-"\\hfill",
-"\\begin{minipage}[r]{2.8in}",
-"\\sigskip \\signature{}{Dr. Harish Kumar \\\\ Principal }",
-"\\end{minipage}} ",
-"\\pagebreak}",*/
-/*"\\end{document}"]).pipe(output);*/
-	//Watch the write stream for it to finish, then send the email to the user
 	pdf.on('error', err => console.error(err));
 	pdf.on('finish', () => emailpdf(userEmail));
+	});
 };
 
 function emailpdf(userEmail) {
