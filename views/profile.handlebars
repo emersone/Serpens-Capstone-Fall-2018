@@ -28,7 +28,7 @@
 		      		<input type="file" id="sig_img" name="sig" accept="image/*"/>
 		      		<input type="hidden" name="sig_name" value="{{sig_name}}"/>
 		      		Current Signature:
-              {{#if sig_id}} <a href="/signature?id={{sig_id}}">{{sig_name}}</a> {{/if}}
+              {{#if sig_id}} <a href="/signature?id={{sig_id}}" target="_blank">{{sig_name}}</a> {{/if}}
               {{#unless sig_id}} {{sig_name}} {{/unless}}
 			  </tr>
 	    </tbody>
