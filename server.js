@@ -274,11 +274,17 @@ app.post("/profile", (req, res) => {
   }
 });
 
-// for test purposes to fetch and display a signature in the browser
 app.get("/signature", (req, res) => {
   console.log(req.query);
   getSignature(req.query.id).then((data) => {
     res.render('testSignature', {data: data.sig});
+  });
+});
+
+app.get("/signatureOnly", (req, res) => {
+  console.log(req.query);
+  getSignature(req.query.id).then((data) => {
+    res.send(data.sig);
   });
 });
 
@@ -415,6 +421,7 @@ app.post("/awards", (req, res) => {
     res.render('notLoggedIn', {});
   }
 });
+
 /* ******************* Backend Functions ******************* */
 
 /*------------- Create an admin -------------*/
